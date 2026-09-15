@@ -4,10 +4,12 @@ import * as mammoth from "mammoth";
 export default function TextCounter() {
     const [text, setText] = useState("");
     const hasRecordedUse = useRef(false);
-
+    const latestUseRequest = useRef<symbol | null>(null);
     const recordToolUse = () => {
         if (hasRecordedUse.current) return;
 
+        const requestId = Symbol();
+        latestUseRequest.current = requestId;
         hasRecordedUse.current = true;
 
         void fetch("/api/analytics", {
@@ -19,7 +21,19 @@ export default function TextCounter() {
                 eventType: "tool_use",
                 toolName: "文本字数统计",
             }),
-        });
+        })
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error(`统计请求失败：${response.status}`);
+                }
+            })
+            .catch((error) => {
+                if (latestUseRequest.current === requestId) {
+                    hasRecordedUse.current = false;
+                }
+
+                console.warn("本次使用统计未确认成功：", error);
+            });
     };
     return (
         <div className="flex w-full flex-col items-start gap-4 rounded-2xl border border-zinc-200 bg-zinc-50 p-6 text-base font-medium dark:border-zinc-800 dark:bg-zinc-900">
