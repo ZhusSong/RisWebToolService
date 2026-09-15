@@ -57,6 +57,8 @@ export default function TextCounter() {
 
                             if (content.trim().length > 0) {
                                 recordToolUse();
+                            } else {
+                                hasRecordedUse.current = false;
                             }
                         } catch {
                             alert("文件读取失败，请确认文件没有损坏，且格式为 TXT 或 DOCX。");
@@ -80,6 +82,8 @@ export default function TextCounter() {
 
                     if (value.trim().length > 0) {
                         recordToolUse();
+                    } else {
+                        hasRecordedUse.current = false;
                     }
                 }}
 
@@ -97,7 +101,10 @@ export default function TextCounter() {
             </p>
             <button
                 type="button"
-                onClick={() => setText("")}
+                onClick={() => {
+                    setText("");
+                    hasRecordedUse.current = false;
+                }}
                 disabled={text.length === 0}
                 className="rounded-xl bg-blue-600 px-6 py-3 text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-zinc-300"
             >
