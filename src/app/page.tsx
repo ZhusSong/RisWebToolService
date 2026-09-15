@@ -1,6 +1,8 @@
 //import Image from "next/image";
 //import TextCounter from "./components/TextCounter";
 import Link from "next/link";
+import PageViewTracker from "./components/PageViewTracker";
+
 export default function Home() {
   return (
     <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
@@ -31,7 +33,8 @@ export default function Home() {
                       打开工具 →
                   </span>
               </Link>
-      </main>
+          </main>
+          <PageViewTracker pageName="首页" />
     </div>
   );
 }

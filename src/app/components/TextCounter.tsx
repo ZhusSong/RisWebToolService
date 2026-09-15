@@ -1,11 +1,29 @@
 "use client";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import * as mammoth from "mammoth";
 export default function TextCounter() {
     const [text, setText] = useState("");
+    const hasRecordedUse = useRef(false);
+
+    const recordToolUse = () => {
+        if (hasRecordedUse.current) return;
+
+        hasRecordedUse.current = true;
+
+        void fetch("/api/analytics", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                eventType: "tool_use",
+                toolName: "文本字数统计",
+            }),
+        });
+    };
     return (
         <div className="flex w-full flex-col items-start gap-4 rounded-2xl border border-zinc-200 bg-zinc-50 p-6 text-base font-medium dark:border-zinc-800 dark:bg-zinc-900">
-            <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+      <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
                 文本字数统计
             </h2>
             <label className="inline-flex cursor-pointer items-center rounded-xl border border-zinc-300 bg-zinc-50 px-6 py-3 text-sm font-medium text-zinc-900 transition-colors hover:border-blue-500 hover:bg-blue-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:border-blue-500 dark:hover:bg-zinc-800">
@@ -36,6 +54,10 @@ export default function TextCounter() {
                             }
 
                             setText(content);
+
+                            if (content.trim().length > 0) {
+                                recordToolUse();
+                            }
                         } catch {
                             alert("文件读取失败，请确认文件没有损坏，且格式为 TXT 或 DOCX。");
                         } finally {
@@ -51,7 +73,16 @@ export default function TextCounter() {
             </span>
             <textarea
                 value={text}
-                onChange={(event) => setText(event.target.value)}
+
+                onChange={(event) => {
+                    const value = event.target.value;
+                    setText(value);
+
+                    if (value.trim().length > 0) {
+                        recordToolUse();
+                    }
+                }}
+
                 aria-label="需要统计的文本"
                 placeholder="请在这里输入或粘贴文本……"
                 rows={6}
