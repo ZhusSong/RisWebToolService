@@ -1,6 +1,7 @@
 import Database from "better-sqlite3";
 import { mkdirSync } from "node:fs";
 import path from "node:path";
+import { isAdminAuthenticated } from "../../../lib/admin-auth";
 
 export const runtime = "nodejs";
 
@@ -46,6 +47,36 @@ export async function POST(request: Request) {
         return Response.json(
             { error: "统计数据保存失败" },
             { status: 500 }
+        );
+    }
+}
+
+export async function GET() {
+    const headers = { "Cache-Control": "no-store" };
+
+    try {
+        if (!(await isAdminAuthenticated())) {
+            return Response.json(
+                { error: "请先登录管理员账号。" },
+                { status: 401, headers }
+            );
+        }
+
+        const totals = database.prepare(`
+            SELECT
+                COUNT(CASE WHEN event_type = 'page_view' THEN 1 END) AS pageViews,
+                COUNT(CASE WHEN event_type = 'tool_use' THEN 1 END) AS toolUses
+            FROM analytics_events
+        `).get() as {
+            pageViews: number;
+            toolUses: number;
+        };
+
+        return Response.json(totals, { headers });
+    } catch {
+        return Response.json(
+            { error: "统计数据读取失败。" },
+            { status: 500, headers }
         );
     }
 }

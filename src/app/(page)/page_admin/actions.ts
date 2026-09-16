@@ -1,0 +1,11 @@
+"use server";
+
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+
+export async function logoutAdmin(): Promise<void> {
+    const cookieStore = await cookies();
+    cookieStore.delete("admin_session");
+
+    redirect("/page_admin_login");
+}
