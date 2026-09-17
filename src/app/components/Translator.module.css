@@ -1,0 +1,94 @@
+.actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 10px 20px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.5;
+    white-space: nowrap;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgb(0 0 0 / 8%);
+    transition: transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+}
+
+    .button svg {
+        width: 18px;
+        height: 18px;
+        flex-shrink: 0;
+    }
+
+.translate {
+    background: #6550ef;
+    color: #ffffff;
+}
+
+    .translate:hover:not(:disabled) {
+        background: #5540db;
+    }
+
+.copy {
+    background: #16853e;
+    color: #ffffff;
+}
+
+    .copy:hover:not(:disabled) {
+        background: #116e32;
+    }
+
+.clear {
+    border-color: #d5dce2;
+    background: #ffffff;
+    color: #354553;
+}
+
+    .clear:hover:not(:disabled) {
+        background: #eef2f6;
+    }
+
+.button:hover:not(:disabled) {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgb(0 0 0 / 14%);
+}
+
+.button:active:not(:disabled) {
+    transform: translateY(0) scale(0.97);
+    box-shadow: 0 1px 2px rgb(0 0 0 / 10%);
+    transition-duration: 80ms;
+}
+
+.button:focus-visible {
+    outline: 3px solid #8295a7;
+    outline-offset: 3px;
+}
+
+.button:disabled {
+    border-color: #d5dce2;
+    background: #e5e9ef;
+    color: #637083;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .button {
+        transition: none;
+    }
+
+        .button:hover:not(:disabled),
+        .button:active:not(:disabled) {
+            transform: none;
+        }
+}
