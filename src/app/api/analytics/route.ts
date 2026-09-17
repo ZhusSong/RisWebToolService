@@ -72,7 +72,36 @@ export async function GET() {
             toolUses: number;
         };
 
-        return Response.json(totals, { headers });
+        const dailyToolUses = database.prepare(`
+    SELECT
+        date(created_at, '+9 hours') AS date,
+        COALESCE(NULLIF(tool_name, ''), '未命名工具') AS toolName,
+        COUNT(*) AS uses
+    FROM analytics_events
+    WHERE event_type = 'tool_use'
+      AND created_at >= datetime(
+          'now', '+9 hours', 'start of day', '-29 days', '-9 hours'
+      )
+      AND created_at < datetime(
+          'now', '+9 hours', 'start of day', '+1 day', '-9 hours'
+      )
+    GROUP BY date(created_at, '+9 hours'),
+             COALESCE(NULLIF(tool_name, ''), '未命名工具')
+    ORDER BY date DESC, uses DESC, toolName ASC
+`).all() as {
+            date: string;
+            toolName: string;
+            uses: number;
+        }[];
+
+        return Response.json(
+            {
+                ...totals,
+                dailyToolUses,
+                timeZone: "Asia/Tokyo",
+            },
+            { headers }
+        );
     } catch {
         return Response.json(
             { error: "统计数据读取失败。" },
