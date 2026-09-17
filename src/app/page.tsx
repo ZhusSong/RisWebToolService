@@ -3,6 +3,7 @@
 import Link from "next/link";
 import PageViewTracker from "./components/PageViewTracker";
 import messages from "../messages/zh-CN";
+import Image from "next/image";
 
 export default function Home() {
   return (
@@ -40,7 +41,18 @@ export default function Home() {
                             hover:bg-[#8295A7] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#526779]"
               >
                   <h2 className="text-xl font-semibold text-[#293845]">
-                      {messages.tools.textCounter.title}
+                              <div className="flex items-center gap-3">
+                                  <Image
+                                      src="/Pictures/logo_textcounter.png"
+                                      alt=""
+                                      width={36}
+                                      height={36}
+                                      className="h-9 w-9 shrink-0 rounded-lg object-contain"
+                                  />
+                                  <h2 className="text-xl font-semibold text-[#293845]">
+                                      {messages.tools.textCounter.title}
+                                  </h2>
+                              </div>
                   </h2>
                   <p className="mt-2 text-sm leading-6 text-[#465563] group-hover:text-[#1F2B35]">
                       {messages.tools.textCounter.description}
