@@ -35,7 +35,9 @@ export default function Home() {
                   <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
               <Link
                   href="/page_textcounter"
-                  className="group block w-full rounded-2xl border border-[#E1E5E8] bg-[#F3F4F5] p-6 transition-colors duration-200 hover:border-[#8295A7] hover:bg-[#8295A7] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#526779]"
+                          className="group block w-full rounded-2xl border border-[#E1E5E8] bg-[#F3F4F5] p-6 transition-all duration-200 ease-out 
+                            motion-safe:hover:-translate-y-1 hover:shadow-lg motion-reduce:transition-none duration-200 hover:border-[#8295A7] 
+                            hover:bg-[#8295A7] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#526779]"
               >
                   <h2 className="text-xl font-semibold text-[#293845]">
                       {messages.tools.textCounter.title}

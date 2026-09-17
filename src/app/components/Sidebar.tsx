@@ -1,14 +1,21 @@
 import Link from "next/link";
 import messages from "../../messages/zh-CN";
-
+import Image from "next/image";
 export default function Sidebar() {
     return (
         <aside className="w-full shrink-0 border-b border-zinc-200 bg-[#F5F6F7] p-6 md:sticky md:top-0 md:h-screen md:w-60 md:border-b-0 md:border-r">
             <Link
                 href="/"
-                className="text-2xl font-bold tracking-wide text-[#354553]"
+                className="flex items-center gap-3 text-2xl font-bold tracking-wide text-[#354553]"
             >
-                {messages.site.name}
+                <Image
+                    src="/Pictures/logo.png"
+                    alt=""
+                    width={48}
+                    height={48}
+                    className="h-12 w-12 shrink-0 object-contain"
+                />
+                <span className="whitespace-nowrap">{messages.site.name}</span>
             </Link>
 
             <nav aria-label={messages.navigation.label} className="mt-8 space-y-6">
