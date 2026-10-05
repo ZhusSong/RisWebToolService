@@ -41,6 +41,22 @@ const zhCN = {
         copy: "复制译文",
         copied: "已复制",
         clear: "清空",
+        pronunciation: {
+            pinyin: "中文拼音",
+            romaji: "日文罗马音",
+            hint: "读音仅供参考，多音字、人名和地名可能存在差异。",
+            unavailable: "读音暂时无法生成，译文仍可正常使用。",
+        },
+        speech: {
+            read: "朗读译文",
+            stop: "停止朗读",
+            speaking: "正在朗读……",
+            unsupported: "当前浏览器不支持语音朗读。",
+            loadingVoices: "正在查找可用声音，请稍候。若始终无法加载，请检查设备语音设置。",
+            missingVoice: "设备没有可用的对应语言声音，请在系统语音设置中添加该语言。",
+            failed: "朗读失败，请检查设备声音或网络设置后重试。",
+            hint: "朗读声音由浏览器或设备提供，部分声音需要联网。",
+        },
         characterLimit: "每次最多 2,000 个字符",
         provider: "由 Google Cloud Translation 提供翻译",
         privacy:

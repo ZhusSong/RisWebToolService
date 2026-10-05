@@ -92,3 +92,19 @@
             transform: none;
         }
 }
+
+.pronunciation {
+    margin-top: 16px;
+    padding: 16px;
+    border: 1px solid #dce3e9;
+    border-radius: 12px;
+    background: #eef2f6;
+    color: #354553;
+}
+.pronunciationTitle { margin: 0 0 8px; font-size: 14px; font-weight: 600; }
+.pronunciationText { margin: 0; line-height: 1.8; white-space: pre-wrap; overflow-wrap: anywhere; }
+.speechArea { margin-top: 16px; }
+.speechArea .actions { margin-top: 0; }
+.speechHint { margin: 8px 0 0; color: #526779; font-size: 13px; line-height: 1.7; }
+.read { background: #526779; color: #fff; }
+.read:hover:not(:disabled) { background: #435563; }

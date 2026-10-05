@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import messages from "../../messages/zh-CN";
 import styles from "./Translator.module.css";
+import SpeechControls from "./SpeechControls";
 
 const t = messages.translator;
 const MAX_CHARACTERS = 2_000;
@@ -11,6 +12,7 @@ const languages = ["zh-CN", "en", "ja"] as const;
 
 type Language = (typeof languages)[number];
 type SourceLanguage = Language | "auto";
+type Pronunciation = { kind: "pinyin" | "romaji"; text: string };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === "object" && value !== null;
@@ -32,6 +34,8 @@ export default function Translator() {
     const [source, setSource] = useState<SourceLanguage>("auto");
     const [target, setTarget] = useState<Language>("en");
     const [result, setResult] = useState("");
+    const [pronunciation, setPronunciation] = useState<Pronunciation | null>(null);
+    const [pronunciationUnavailable, setPronunciationUnavailable] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [copied, setCopied] = useState(false);
@@ -51,6 +55,8 @@ export default function Translator() {
 
     function resetResult() {
         setResult("");
+        setPronunciation(null);
+        setPronunciationUnavailable(false);
         setError("");
         setCopied(false);
         copyVersion.current += 1;
@@ -124,6 +130,20 @@ export default function Translator() {
 
             // 译文通过 textarea 的 value 显示，不作为 HTML 执行。
             setResult(data.translatedText);
+            const reading = data.pronunciation;
+            if (
+                isRecord(reading) &&
+                typeof reading.text === "string" &&
+                reading.text.trim() &&
+                ((target === "zh-CN" && reading.kind === "pinyin") ||
+                    (target === "ja" && reading.kind === "romaji"))
+            ) {
+                setPronunciation({
+                    kind: reading.kind as Pronunciation["kind"],
+                    text: reading.text,
+                });
+            }
+            setPronunciationUnavailable(data.pronunciationUnavailable === true);
         } catch {
             if (activeRequest.current === controller) {
                 setError(
@@ -164,11 +184,6 @@ export default function Translator() {
         "w-full rounded-xl border border-[#D5DCE2] bg-white px-4 py-3 " +
         "text-[#293845] outline-none focus:border-[#8295A7] " +
         "focus:ring-2 focus:ring-[#8295A7]/30 disabled:opacity-60";
-
-    const buttonClass =
-        "rounded-xl border border-[#D5DCE2] px-5 py-3 text-sm font-medium " +
-        "transition-colors hover:bg-[#DCE3E9] " +
-        "disabled:cursor-not-allowed disabled:opacity-50";
 
     return (
         <section
@@ -285,6 +300,27 @@ export default function Translator() {
                                 placeholder={t.resultPlaceholder}
                                 className={`${fieldClass} min-h-64 resize-y`}
                             />
+
+                            {pronunciation && (
+                                <div className={styles.pronunciation}>
+                                    <h2 className={styles.pronunciationTitle}>
+                                        {t.pronunciation[pronunciation.kind]}
+                                    </h2>
+                                    <p className={styles.pronunciationText}>
+                                        {pronunciation.text}
+                                    </p>
+                                    <p className={styles.speechHint}>{t.pronunciation.hint}</p>
+                                </div>
+                            )}
+                            {pronunciationUnavailable && (
+                                <p role="status" className={styles.speechHint}>
+                                    {t.pronunciation.unavailable}
+                                </p>
+                            )}
+                            {result && (
+                                <SpeechControls key={`${target}:${result}`}
+                                    text={result} language={target} />
+                            )}
                         </div>
                     </div>
                 </fieldset>

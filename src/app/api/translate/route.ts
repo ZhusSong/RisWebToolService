@@ -6,6 +6,9 @@ import {
     reserveTranslationUsage,
 } from "../../../lib/translation-limit";
 
+import { generatePronunciation } from "../../../lib/pronunciation";
+import type { Pronunciation } from "../../../lib/pronunciation";
+
 export const runtime = "nodejs";
 
 const supportedLanguages = new Set(["zh-CN", "en", "ja"]);
@@ -220,9 +223,34 @@ export async function POST(request: Request) {
             console.error("Translation analytics write failed.");
         }
 
+        let pronunciation: Pronunciation | null = null;
+        let pronunciationUnavailable = false;
+        // Reading is optional. A cold dictionary load must not delay the
+        // already completed translation indefinitely.
+        let readingTimer: ReturnType<typeof setTimeout> | undefined;
+        try {
+            pronunciation = await Promise.race([
+                generatePronunciation(translation.translatedText, target),
+                new Promise<never>((_resolve, reject) => {
+                    readingTimer = setTimeout(
+                        () => reject(new Error("Pronunciation timed out.")),
+                        5_000
+                    );
+                }),
+            ]);
+        } catch {
+            // Pronunciation is optional: retain the translation and its usage.
+            pronunciationUnavailable = true;
+            console.error("Translation pronunciation generation failed.");
+        } finally {
+            if (readingTimer) clearTimeout(readingTimer);
+        }
+
         return Response.json(
             {
                 translatedText: translation.translatedText,
+                pronunciation,
+                pronunciationUnavailable,
                 detectedSourceLanguage:
                     typeof translation.detectedSourceLanguage === "string"
                         ? translation.detectedSourceLanguage
