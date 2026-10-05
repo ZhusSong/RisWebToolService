@@ -1,0 +1,52 @@
+.websiteMenu {
+    margin-top: 8px;
+    min-width: 0;
+}
+
+.websiteToggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: #fff;
+    color: #000;
+    font-size: 16px;
+    line-height: 24px;
+    list-style: none;
+    cursor: pointer;
+    transition: background-color 180ms ease;
+}
+
+.websiteToggle::-webkit-details-marker { display: none; }
+.websiteToggle::marker { content: ""; }
+.websiteToggle:hover { background: #eef0f2; }
+.websiteToggle:focus-visible { outline: 2px solid #000; outline-offset: 2px; }
+
+.websiteLabel {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+.categoryIcon { display: block; width: 18px; height: 18px; flex: 0 0 18px; }
+.chevron {
+    display: block;
+    width: 14px;
+    height: 14px;
+    flex: 0 0 14px;
+    margin-left: auto;
+    transition: transform 180ms ease;
+}
+.websiteMenu[open] > .websiteToggle .chevron { transform: rotate(180deg); }
+
+@media (prefers-reduced-motion: reduce) {
+    .websiteToggle, .chevron { transition: none; }
+}
+
+.textToolLink { margin-top: 8px; text-decoration: none; }

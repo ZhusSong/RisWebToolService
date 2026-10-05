@@ -8,6 +8,10 @@ const zhCN = {
         home: "首页",
         categories: "分类",
         textTools: "文本工具",
+        websites: "网站导航",
+        searchTools: "搜索工具",
+        aiNavigation: "AI工具",
+        entertainment: "娱乐",
     },
     tools: {
         textCounter: {
@@ -19,6 +23,33 @@ const zhCN = {
             title: "文本翻译",
             description: "支持中文、英文和日文互译，自动识别原文语言。",
             open: "打开工具",
+        },
+    },
+    websites: {
+        bilibili: {
+            title: "哔哩哔哩",
+            description: "访问哔哩哔哩官网，探索感兴趣的视频内容。",
+            open: "访问网站（新标签页）",
+        },
+        google: {
+            title: "谷歌搜索",
+            description: "访问 Google 官网，搜索网页、图片和更多信息。",
+            open: "访问网站（新标签页）",
+        },
+        chatgpt: {
+            title: "ChatGPT",
+            description: "访问 ChatGPT，进行 AI 对话、写作和编程。",
+            open: "访问网站（新标签页）",
+        },
+        claude: {
+            title: "Claude",
+            description: "访问 Claude，进行 AI 对话、文档分析和编程。",
+            open: "访问网站（新标签页）",
+        },
+        deepseek: {
+            title: "DeepSeek",
+            description: "访问 DeepSeek，使用 AI 对话助手。",
+            open: "访问网站（新标签页）",
         },
     },
     translator: {

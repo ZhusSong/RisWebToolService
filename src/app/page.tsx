@@ -18,7 +18,29 @@ const openClass =
     "mt-4 inline-block text-sm font-medium text-[#435D73] " +
     "group-hover:text-[#1F2B35]";
 
-export default function Home() {
+const websites = [
+    { key: "bilibili", category: "entertainment", href: "https://www.bilibili.com/", logo: "logo_Bilibili.png" },
+    { key: "google", category: "search", href: "https://www.google.com/", logo: "logo_Google.png" },
+    { key: "chatgpt", category: "ai", href: "https://chatgpt.com/", logo: "logo_Chatgpt.png" },
+    { key: "claude", category: "ai", href: "https://claude.ai/", logo: "logo_Claude.png" },
+    { key: "deepseek", category: "ai", href: "https://chat.deepseek.com/", logo: "logo_Deepseek.png" },
+] as const;
+const websiteGroups = [
+    { key: "search", title: messages.navigation.searchTools },
+    { key: "ai", title: messages.navigation.aiNavigation },
+    { key: "entertainment", title: messages.navigation.entertainment },
+] as const;
+
+export default async function Home({
+    searchParams,
+}: {
+    searchParams: Promise<{ category?: string | string[] }>;
+}) {
+    const { category } = await searchParams;
+    // Unknown or repeated category values show the complete home page.
+    const selectedCategory = category === "text-tools" || category === "websites" || category === "search" || category === "ai" || category === "entertainment"
+        ? category
+        : null;
     return (
         <div className="flex flex-1 flex-col bg-[#FAFBFC] font-sans">
             <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 px-6 py-10 md:px-10">
@@ -34,6 +56,7 @@ export default function Home() {
 
                 <section
                     id="text-tools"
+                    hidden={selectedCategory !== null && selectedCategory !== "text-tools"}
                     aria-labelledby="text-tools-title"
                     className="w-full scroll-mt-6"
                 >
@@ -98,6 +121,62 @@ export default function Home() {
                                 {messages.tools.translator.open} →
                             </span>
                         </Link>
+                    </div>
+                </section>
+                <section
+                    id="websites"
+                    hidden={selectedCategory === "text-tools"}
+                    aria-labelledby="websites-title"
+                    className="w-full scroll-mt-6"
+                >
+                    <h2
+                        id="websites-title"
+                        className="mb-4 text-lg font-semibold text-[#354553]"
+                    >
+                        {messages.navigation.websites}
+                    </h2>
+                    <div className="space-y-8">
+                        {websiteGroups.map((group) => (
+                            <section
+                                key={group.key}
+                                hidden={selectedCategory !== null && selectedCategory !== "websites" && selectedCategory !== group.key}
+                                aria-labelledby={`websites-${group.key}-title`}
+                            >
+                                <h3 id={`websites-${group.key}-title`} className="mb-4 text-base font-semibold text-[#526779]">
+                                    {group.title}
+                                </h3>
+                                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
+                                    {websites.filter((website) => website.category === group.key).map((website) => (
+                                        <a
+                                            key={website.key}
+                                            href={website.href}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className={cardClass}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <Image
+                                                    src={`/Pictures/${website.logo}`}
+                                                    alt=""
+                                                    width={36}
+                                                    height={36}
+                                                    className="h-9 w-9 shrink-0 rounded-lg object-contain"
+                                                />
+                                                <h4 className="text-xl font-semibold text-[#293845]">
+                                                    {messages.websites[website.key].title}
+                                                </h4>
+                                            </div>
+                                            <p className={descriptionClass}>
+                                                {messages.websites[website.key].description}
+                                            </p>
+                                            <span className={openClass}>
+                                                {messages.websites[website.key].open} ↗
+                                            </span>
+                                        </a>
+                                    ))}
+                                </div>
+                            </section>
+                        ))}
                     </div>
                 </section>
             </main>
