@@ -3,12 +3,17 @@ import { mkdirSync } from "node:fs";
 import path from "node:path";
 import { isAdminAuthenticated } from "../../../lib/admin-auth";
 
+import {
+    getVisitorIp, initializeVisitorStats, pruneVisitorStats,
+    recordVisitorPageView, readVisitorStats,
+} from "../../../lib/visitor-analytics";
+
 export const runtime = "nodejs";
 
 const dataDirectory = path.join(process.cwd(), "data");
 mkdirSync(dataDirectory, { recursive: true });
 
-const database = new Database(path.join(dataDirectory, "analytics.db"));
+const database = new Database(path.join(dataDirectory, "analytics.db"), { timeout: 5_000 });
 
 database.exec(`
     CREATE TABLE IF NOT EXISTS analytics_events (
@@ -18,6 +23,8 @@ database.exec(`
         created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     )
 `);
+
+initializeVisitorStats(database);
 
 export async function POST(request: Request) {
     try {
@@ -36,11 +43,14 @@ export async function POST(request: Request) {
             );
         }
 
-        database
-            .prepare(
+        const ip = eventType === "page_view" ? getVisitorIp(request.headers) : null;
+        database.transaction(() => {
+            database.prepare(
                 "INSERT INTO analytics_events (event_type, tool_name) VALUES (?, ?)"
-            )
-            .run(eventType, toolName);
+            ).run(eventType, toolName);
+            pruneVisitorStats(database);
+            if (ip) recordVisitorPageView(database, ip);
+        })();
 
         return Response.json({ ok: true });
     } catch {
@@ -98,6 +108,7 @@ export async function GET() {
             {
                 ...totals,
                 dailyToolUses,
+                visitorStats: readVisitorStats(database),
                 timeZone: "Asia/Tokyo",
             },
             { headers }

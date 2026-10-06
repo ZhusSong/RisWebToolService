@@ -31,6 +31,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
 
                   <div className="flex min-w-0 flex-1 flex-col">
                       {children}
+                      {process.env.ANALYTICS_TRUST_PROXY === "true" && (
+                          <footer className="px-6 py-4 text-center text-xs text-zinc-500">
+                              本站为运行统计记录访问 IP、访问次数及时间，仅供管理员查看，保留最近 30 天；过期数据在下次统计请求时清理。
+                          </footer>
+                      )}
                   </div>
               </div>
           </body>

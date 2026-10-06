@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import VisitorStats, { parseVisitorStats } from "./VisitorStats";
+import type { VisitorStatsData } from "./VisitorStats";
 
 type DailyToolUse = {
     date: string;
@@ -13,6 +15,7 @@ type Stats = {
     toolUses: number;
     dailyToolUses: DailyToolUse[];
     timeZone: string;
+    visitorStats: VisitorStatsData;
 };
 
 export default function AdminStats() {
@@ -46,6 +49,7 @@ export default function AdminStats() {
                     !("toolUses" in data) ||
                     !("dailyToolUses" in data) ||
                     !("timeZone" in data) ||
+                    !("visitorStats" in data) ||
                     typeof data.pageViews !== "number" ||
                     typeof data.toolUses !== "number" ||
                     !Array.isArray(data.dailyToolUses) ||
@@ -85,6 +89,7 @@ export default function AdminStats() {
                         toolUses: data.toolUses,
                         dailyToolUses,
                         timeZone: data.timeZone,
+                        visitorStats: parseVisitorStats(data.visitorStats),
                     });
                 }
             } catch (error) {
@@ -186,6 +191,7 @@ export default function AdminStats() {
                     </div>
                 )}
             </section>
+            <VisitorStats data={stats.visitorStats} />
         </div>
     );
 }

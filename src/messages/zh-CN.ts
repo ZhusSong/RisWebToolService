@@ -91,7 +91,7 @@ const zhCN = {
         characterLimit: "每次最多 2,000 个字符",
         provider: "由 Google Cloud Translation 提供翻译",
         privacy:
-            "点击翻译后，原文会发送至 Google 进行处理。本站不保存原文和译文，仅记录使用次数与用量。",
+            "点击翻译后，原文会发送至 Google 进行处理。本站不保存原文和译文，仅记录使用次数、用量及访问统计。IP 统计说明见页底。",
         errors: {
             emptyText: "请先输入需要翻译的文字。",
             textTooLong: "原文超过 2,000 个字符，请缩短后重试。",
