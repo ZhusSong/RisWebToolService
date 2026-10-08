@@ -1,9 +1,10 @@
 import Link from "next/link";
 import Translator from "../../components/Translator";
 import PageViewTracker from "../../components/PageViewTracker";
-import messages from "../../../messages/zh-CN";
+import { getServerI18n } from "../../../lib/i18n-server";
 
-export default function TranslatePage() {
+export default async function TranslatePage() {
+    const { messages } = await getServerI18n();
     return (
         <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-10 md:px-10">
             <PageViewTracker pageName="文本翻译页面" />

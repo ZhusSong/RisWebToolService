@@ -1,3 +1,5 @@
+import { useI18n } from "./LanguageProvider";
+
 type VisitorRow = { ip: string; pageViews: number; lastSeen: string };
 export type VisitorStatsData = {
     uniqueIps: number;
@@ -28,37 +30,35 @@ export function parseVisitorStats(value: unknown): VisitorStatsData {
 }
 
 export default function VisitorStats({ data }: { data: VisitorStatsData }) {
-    const formatDate = (value: string) => new Intl.DateTimeFormat("zh-CN", {
+    const { t, locale } = useI18n();
+    const formatDate = (value: string) => new Intl.DateTimeFormat(locale, {
         timeZone: "Asia/Tokyo", year: "numeric", month: "2-digit", day: "2-digit",
         hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23",
     }).format(new Date(value));
     return (
         <section className="rounded-2xl border border-zinc-200 bg-zinc-50 p-6 dark:border-zinc-800 dark:bg-zinc-900">
-            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">访问者 IP 统计</h2>
+            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">{t("访问者 IP 统计")}</h2>
             <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-                最近 30 天（含今天），不同 IP {data.uniqueIps.toLocaleString()} 个，
-                已记录 IP 的页面访问 {data.pageViews.toLocaleString()} 次。IP 数不代表独立访客人数。
-                以下按最近访问排序，最多显示 100 个 IP。时间为 Asia/Tokyo。
+                {t("最近 30 天（含今天），不同 IP {ips} 个，已记录 IP 的页面访问 {views} 次。IP 数不代表独立访客人数。以下按最近访问排序，最多显示 100 个 IP。时间为 Asia/Tokyo。", { ips: data.uniqueIps.toLocaleString(locale), views: data.pageViews.toLocaleString(locale) })}
             </p>
             <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-                仅统计功能启用后的页面访问，包含测试记录；历史访问无法补全 IP。
-                超出 30 天的 IP 记录会在下次统计请求时清理。
+                {t("仅统计功能启用后的页面访问，包含测试记录；历史访问无法补全 IP。超出 30 天的 IP 记录会在下次统计请求时清理。")}
             </p>
             {!data.enabled && <p role="status" className="mt-4 text-sm text-amber-700">
-                IP 采集尚未启用。确认 Nginx 覆盖 X-Real-IP 且后端端口不对公网开放后，设置 ANALYTICS_TRUST_PROXY=true 并重启服务。
+                {t("IP 采集尚未启用。确认 Nginx 覆盖 X-Real-IP 且后端端口不对公网开放后，设置 ANALYTICS_TRUST_PROXY=true 并重启服务。")}
             </p>}
             {data.rows.length === 0 ? <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
-                暂无 IP 访问记录。启用后，请通过网站域名访问页面再刷新此处。
+                {t("暂无 IP 访问记录。启用后，请通过网站域名访问页面再刷新此处。")}
             </p> : <div className="mt-4 overflow-x-auto">
                 <table className="w-full text-left text-sm text-zinc-900 dark:text-zinc-100">
                     <thead><tr className="border-b border-zinc-300 dark:border-zinc-700">
-                        <th scope="col" className="px-3 py-3">IP 地址</th>
-                        <th scope="col" className="px-3 py-3 text-right">页面访问次数</th>
-                        <th scope="col" className="px-3 py-3">最近访问时间</th>
+                        <th scope="col" className="px-3 py-3">{t("IP 地址")}</th>
+                        <th scope="col" className="px-3 py-3 text-right">{t("页面访问次数")}</th>
+                        <th scope="col" className="px-3 py-3">{t("最近访问时间")}</th>
                     </tr></thead>
                     <tbody>{data.rows.map((row) => <tr key={row.ip} className="border-b border-zinc-200 last:border-0 dark:border-zinc-800">
                         <td className="whitespace-nowrap px-3 py-3 font-mono">{row.ip}</td>
-                        <td className="px-3 py-3 text-right tabular-nums">{row.pageViews.toLocaleString()}</td>
+                        <td className="px-3 py-3 text-right tabular-nums">{row.pageViews.toLocaleString(locale)}</td>
                         <td className="whitespace-nowrap px-3 py-3">{formatDate(row.lastSeen)}</td>
                     </tr>)}</tbody>
                 </table>

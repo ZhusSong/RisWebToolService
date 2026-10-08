@@ -1,5 +1,6 @@
 "use client";
 
+import { useI18n } from "./LanguageProvider";
 import { useEffect, useState } from "react";
 import VisitorStats, { parseVisitorStats } from "./VisitorStats";
 import type { VisitorStatsData } from "./VisitorStats";
@@ -19,6 +20,7 @@ type Stats = {
 };
 
 export default function AdminStats() {
+    const { t, locale } = useI18n();
     const [stats, setStats] = useState<Stats | null>(null);
     const [error, setError] = useState("");
 
@@ -111,7 +113,7 @@ export default function AdminStats() {
     if (error) {
         return (
             <p role="alert" className="mt-6 text-red-600 dark:text-red-400">
-                {error}
+                {t(error)}
             </p>
         );
     }
@@ -119,7 +121,7 @@ export default function AdminStats() {
     if (!stats) {
         return (
             <p className="mt-6 text-zinc-600 dark:text-zinc-400">
-                正在读取统计数据……
+                {t("正在读取统计数据……")}
             </p>
         );
     }
@@ -129,45 +131,45 @@ export default function AdminStats() {
             <div className="grid gap-4 sm:grid-cols-2">
             <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-6 dark:border-zinc-800 dark:bg-zinc-900">
                 <h2 className="text-sm text-zinc-600 dark:text-zinc-400">
-                    页面访问次数
+                    {t("页面访问次数")}
                 </h2>
                 <p className="mt-2 text-3xl font-semibold text-zinc-900 dark:text-zinc-100">
-                    {stats.pageViews.toLocaleString()}
+                    {stats.pageViews.toLocaleString(locale)}
                 </p>
             </div>
 
             <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-6 dark:border-zinc-800 dark:bg-zinc-900">
                 <h2 className="text-sm text-zinc-600 dark:text-zinc-400">
-                    工具使用次数
+                    {t("工具使用次数")}
                 </h2>
                 <p className="mt-2 text-3xl font-semibold text-zinc-900 dark:text-zinc-100">
-                    {stats.toolUses.toLocaleString()}
+                    {stats.toolUses.toLocaleString(locale)}
                 </p>
             </div>
             </div>
             <section className="rounded-2xl border border-zinc-200 bg-zinc-50 p-6 dark:border-zinc-800 dark:bg-zinc-900">
                 <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-                    每日工具使用统计
+                    {t("每日工具使用统计")}
                 </h2>
 
                 <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-                    最近 30 天（含今天），仅显示有使用记录的日期和工具。
-                    统计时区：{stats.timeZone}
+                    {t("最近 30 天（含今天），仅显示有使用记录的日期和工具。")}
+                    {t("统计时区：")}{stats.timeZone}
                 </p>
 
                 {stats.dailyToolUses.length === 0 ? (
                     <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
-                        最近 30 天暂无工具使用记录。
+                        {t("最近 30 天暂无工具使用记录。")}
                     </p>
                 ) : (
                     <div className="mt-4 overflow-x-auto">
                         <table className="w-full text-left text-sm text-zinc-900 dark:text-zinc-100">
                             <thead>
                                 <tr className="border-b border-zinc-300 dark:border-zinc-700">
-                                    <th scope="col" className="px-3 py-3">日期</th>
-                                    <th scope="col" className="px-3 py-3">工具</th>
+                                    <th scope="col" className="px-3 py-3">{t("日期")}</th>
+                                    <th scope="col" className="px-3 py-3">{t("工具")}</th>
                                     <th scope="col" className="px-3 py-3 text-right">
-                                        使用次数
+                                        {t("使用次数")}
                                     </th>
                                 </tr>
                             </thead>
@@ -180,9 +182,9 @@ export default function AdminStats() {
                                         <td className="whitespace-nowrap px-3 py-3">
                                             {item.date}
                                         </td>
-                                        <td className="px-3 py-3">{item.toolName}</td>
+                                        <td className="px-3 py-3">{t(item.toolName)}</td>
                                         <td className="px-3 py-3 text-right tabular-nums">
-                                            {item.uses.toLocaleString()}
+                                            {item.uses.toLocaleString(locale)}
                                         </td>
                                     </tr>
                                 ))}

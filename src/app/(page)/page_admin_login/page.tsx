@@ -1,8 +1,10 @@
 "use client";
 
+import { useI18n } from "../../components/LanguageProvider";
 import { useActionState } from "react";
 import { loginAdmin } from "./actions";
 export default function AdminLoginPage() {
+    const { t } = useI18n();
     const [state, formAction, isPending] = useActionState(
         loginAdmin,
         { error: "" }
@@ -12,11 +14,11 @@ export default function AdminLoginPage() {
 
         <main className="mx-auto min-h-screen w-full max-w-md px-6 py-12">
             <h1 className="text-3xl font-semibold text-zinc-900 dark:text-zinc-100">
-                管理员登录
+                {t("管理员登录")}
             </h1>
 
             <p className="mt-4 text-zinc-600 dark:text-zinc-400">
-                请输入管理员用户名和密码。
+                {t("请输入管理员用户名和密码。")}
             </p>
             <form action={formAction}>
                 <fieldset disabled={isPending}>
@@ -25,7 +27,7 @@ export default function AdminLoginPage() {
                     htmlFor="username"
                     className="block text-sm font-medium text-zinc-900 dark:text-zinc-100"
                 >
-                    管理员用户名
+                    {t("管理员用户名")}
                 </label>
                 <input
                     id="username"
@@ -42,7 +44,7 @@ export default function AdminLoginPage() {
                     htmlFor="password"
                     className="block text-sm font-medium text-zinc-900 dark:text-zinc-100"
                 >
-                    管理员密码
+                    {t("管理员密码")}
                 </label>
                 <input
                     id="password"
@@ -59,7 +61,7 @@ export default function AdminLoginPage() {
                     disabled={isPending}
                     className="mt-6 w-full rounded-xl bg-blue-600 px-4 py-3 font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                        {isPending ? "正在登录…" : "登录"}
+                        {isPending ? t("正在登录…") : t("登录")}
                     </button>
                 </fieldset>
                 {state.error && (
@@ -67,7 +69,7 @@ export default function AdminLoginPage() {
                         role="alert"
                         className="mt-4 text-sm text-red-600 dark:text-red-400"
                     >
-                        {state.error}
+                        {t(state.error)}
                     </p>
                 )}
             </form>

@@ -1,8 +1,10 @@
+import { getServerI18n } from "../../../lib/i18n-server";
 import TextCounter from "../../components/TextCounter";
 import Link from "next/link";
 import PageViewTracker from "../../components/PageViewTracker";
 
-export default function TextCounterPage() {
+export default async function TextCounterPage() {
+    const { t } = await getServerI18n();
     return (
         <main className="mx-auto min-h-screen w-full max-w-3xl px-6 py-12">
             <PageViewTracker pageName="文本字数统计页面" />
@@ -11,7 +13,7 @@ export default function TextCounterPage() {
                 href="/"
                 className="mb-6 inline-block text-sm text-blue-600 hover:underline dark:text-blue-400"
             >
-                ← 返回首页
+                ← {t("返回首页")}
             </Link>
 
             <TextCounter />

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
-import messages from "../../messages/zh-CN";
+import { useI18n } from "./LanguageProvider";
 import styles from "./Translator.module.css";
 
 type Language = "zh-CN" | "en" | "ja";
@@ -35,6 +35,7 @@ export default function SpeechControls({ text, language }: {
     text: string;
     language: Language;
 }) {
+    const { messages } = useI18n();
     const t = messages.translator.speech;
     const [speaking, setSpeaking] = useState(false);
     const [error, setError] = useState("");

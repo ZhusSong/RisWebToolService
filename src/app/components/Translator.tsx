@@ -2,11 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
-import messages from "../../messages/zh-CN";
+import { useI18n } from "./LanguageProvider";
+import type zhCN from "../../messages/zh-CN";
 import styles from "./Translator.module.css";
 import SpeechControls from "./SpeechControls";
 
-const t = messages.translator;
 const MAX_CHARACTERS = 2_000;
 const languages = ["zh-CN", "en", "ja"] as const;
 
@@ -18,7 +18,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === "object" && value !== null;
 }
 
-function getErrorMessage(code: unknown): string {
+function getErrorMessage(code: unknown, t: typeof zhCN.translator): string {
     if (
         typeof code === "string" &&
         Object.prototype.hasOwnProperty.call(t.errors, code)
@@ -30,6 +30,8 @@ function getErrorMessage(code: unknown): string {
 }
 
 export default function Translator() {
+    const { messages, locale } = useI18n();
+    const t = messages.translator;
     const [text, setText] = useState("");
     const [source, setSource] = useState<SourceLanguage>("auto");
     const [target, setTarget] = useState<Language>("en");
@@ -115,7 +117,7 @@ export default function Translator() {
 
             if (!response.ok) {
                 setError(
-                    getErrorMessage(isRecord(data) ? data.error : undefined)
+                    getErrorMessage(isRecord(data) ? data.error : undefined, t)
                 );
                 return;
             }
@@ -254,8 +256,8 @@ export default function Translator() {
                                         : "text-[#526779]"
                                     }`}
                             >
-                                {characterCount.toLocaleString()} /{" "}
-                                {MAX_CHARACTERS.toLocaleString()}
+                                {characterCount.toLocaleString(locale)} /{" "}
+                                {MAX_CHARACTERS.toLocaleString(locale)}
                                 {" · "}
                                 {t.characterLimit}
                             </p>

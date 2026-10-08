@@ -1,7 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import PageViewTracker from "./components/PageViewTracker";
-import messages from "../messages/zh-CN";
+import { getServerI18n } from "../lib/i18n-server";
+import LanguageSelector from "./components/LanguageSelector";
 
 const cardClass =
     "group block w-full rounded-2xl border border-[#E1E5E8] " +
@@ -25,7 +26,7 @@ const websites = [
     { key: "claude", category: "ai", href: "https://claude.ai/", logo: "logo_Claude.png" },
     { key: "deepseek", category: "ai", href: "https://chat.deepseek.com/", logo: "logo_Deepseek.png" },
 ] as const;
-const websiteGroups = [
+const websiteGroups = (messages: Awaited<ReturnType<typeof getServerI18n>>["messages"]) => [
     { key: "search", title: messages.navigation.searchTools },
     { key: "ai", title: messages.navigation.aiNavigation },
     { key: "entertainment", title: messages.navigation.entertainment },
@@ -36,6 +37,7 @@ export default async function Home({
 }: {
     searchParams: Promise<{ category?: string | string[] }>;
 }) {
+    const { messages } = await getServerI18n();
     const { category } = await searchParams;
     // Unknown or repeated category values show the complete home page.
     const selectedCategory = category === "text-tools" || category === "websites" || category === "search" || category === "ai" || category === "entertainment"
@@ -48,6 +50,8 @@ export default async function Home({
                     <h1 className="text-3xl font-semibold leading-10 tracking-tight text-[#293845]">
                         {messages.site.name}
                     </h1>
+
+                    <LanguageSelector />
 
                     <p className="max-w-md text-lg leading-8 text-[#526779]">
                         {messages.site.description}
@@ -136,7 +140,7 @@ export default async function Home({
                         {messages.navigation.websites}
                     </h2>
                     <div className="space-y-8">
-                        {websiteGroups.map((group) => (
+                        {websiteGroups(messages).map((group) => (
                             <section
                                 key={group.key}
                                 hidden={selectedCategory !== null && selectedCategory !== "websites" && selectedCategory !== group.key}

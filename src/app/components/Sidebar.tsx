@@ -1,8 +1,9 @@
 import Link from "next/link";
-import messages from "../../messages/zh-CN";
+import { getServerI18n } from "../../lib/i18n-server";
 import Image from "next/image";
 import styles from "./Sidebar.module.css";
-export default function Sidebar() {
+export default async function Sidebar() {
+    const { messages } = await getServerI18n();
     return (
         <aside className="w-full shrink-0 border-b border-zinc-200 bg-[#F5F6F7] p-6 md:sticky md:top-0 md:h-screen md:w-60 md:border-b-0 md:border-r">
             <Link
@@ -16,7 +17,7 @@ export default function Sidebar() {
                     height={48}
                     className="h-12 w-12 shrink-0 object-contain"
                 />
-                <span className="whitespace-nowrap">{messages.site.name}</span>
+                <span className="min-w-0 break-words text-xl">{messages.site.name}</span>
             </Link>
 
             <nav aria-label={messages.navigation.label} className="mt-8 space-y-6">
