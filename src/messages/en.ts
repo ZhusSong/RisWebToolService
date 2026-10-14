@@ -7,6 +7,9 @@ const messages = {
     },
     modelViewer: {
         inspector: {
+            fbxError: "Could not read FBX. Check the version, textures and model data. Try exporting FBX 7.x again.",
+            sceneNote: "Vertices and triangles are counted per scene mesh instance. Dimensions are the imported-pose bounds after node transforms, in model coordinate units.",
+            sceneMaterials: "GLB/glTF and FBX support materials, textures, bone statistics and animation clips. Specialized FBX materials and constraints may not be reproduced fully. Include external textures.",
             animationCategory: "Animation category (model clips)",
             unnamedAnimation: "Unnamed animation",
             playAnimation: "Play / resume",
@@ -36,7 +39,7 @@ const messages = {
             "groups": "Groups",
             "materials": "Material references",
             "libraries": "MTL references (not loaded)",
-            "drop": "Drop an OBJ, GLB or glTF model",
+            "drop": "Drop an OBJ, GLB, glTF or FBX model",
             "local": "Files are parsed locally in your browser and are not uploaded.",
             "loading": "Parsing…",
             "success": "Parsing complete",
@@ -51,7 +54,7 @@ const messages = {
             "bones": "Bones",
             "animations": "Animations",
             "unsupported": "Not supported by OBJ",
-            "typeError": "Select one OBJ, GLB or glTF model. OBJ currently accepts a single file only.",
+            "typeError": "Select one OBJ, GLB, glTF or FBX model. OBJ currently accepts a single file only.",
             "sizeError": "Files exceed {limit} MiB in total. Use a smaller model.",
             "parseError": "Parsing failed. Check UTF-8 encoding, vertex coordinates and face indices.",
             "timeout": "Parsing timed out. Please use a smaller model.",
@@ -64,7 +67,7 @@ const messages = {
         "status": "OBJ data inspection",
         "detail": "Drop an OBJ file to inspect geometry data locally in your browser.",
         "about": "About model formats",
-        "body": "Supports OBJ and glTF 2.0 (GLB/glTF). OBJ uses gray shading; GLB/glTF preserves hierarchy, materials and textures. Include external BIN files and images. Animation clips can be selected and played.",
+        "body": "Supports OBJ, FBX and glTF 2.0 (GLB/glTF). OBJ uses gray shading; GLB/glTF preserves hierarchy, materials and textures. Include external BIN files and images. Animation clips can be selected and played.",
         "back": "Back to creative tools"
     },
     "navigation": {

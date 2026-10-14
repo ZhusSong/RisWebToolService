@@ -5,6 +5,9 @@ const zhCN = {
     },
     modelViewer: {
         inspector: {
+            fbxError: "FBX 读取失败，请检查文件版本、贴图和模型数据。建议重新导出 FBX 7.x。",
+            sceneNote: "按场景网格实例统计顶点与三角面；尺寸为导入时姿态应用节点变换后的包围盒，使用模型坐标单位。",
+            sceneMaterials: "支持 GLB/glTF 与 FBX 的材质、贴图、骨骼统计及动画片段播放。FBX 的特殊材质和约束不保证完整还原；外置贴图需一并提供。",
             animationCategory: "动画类别（模型片段）",
             unnamedAnimation: "未命名动画",
             playAnimation: "播放 / 继续",
@@ -34,7 +37,7 @@ const zhCN = {
             "groups": "分组",
             "materials": "材质引用",
             "libraries": "MTL 引用（未加载）",
-            "drop": "拖入 OBJ、GLB 或 glTF 模型",
+            "drop": "拖入 OBJ、GLB、glTF 或 FBX 模型",
             "local": "文件仅在本地浏览器解析，不上传服务器。",
             "loading": "正在解析…",
             "success": "解析完成",
@@ -49,7 +52,7 @@ const zhCN = {
             "bones": "骨骼",
             "animations": "动画",
             "unsupported": "OBJ 格式不支持",
-            "typeError": "请选择一个 OBJ、GLB 或 glTF 主文件；OBJ 暂仅支持单文件。",
+            "typeError": "请选择一个 OBJ、GLB、glTF 或 FBX 主文件；OBJ 暂仅支持单文件。",
             "sizeError": "文件总大小超过 {limit} MiB，请使用较小的模型。",
             "parseError": "解析失败：请检查 UTF-8 编码、顶点坐标和面索引。",
             "timeout": "解析超时，请使用较小的模型。",
@@ -62,7 +65,7 @@ const zhCN = {
         "status": "OBJ 数据解析",
         "detail": "拖入 OBJ 文件查看几何数据，文件仅在浏览器本地处理。",
         "about": "关于模型格式",
-        "body": "支持 OBJ、GLB 与 glTF 2.0。OBJ 使用灰色材质；GLB/glTF 保留场景层级、材质和贴图。外置 BIN 与图片需随主文件一起提供；动画可按片段选择播放。",
+        "body": "支持 OBJ、FBX、GLB 与 glTF 2.0。OBJ 使用灰色材质；GLB/glTF 保留场景层级、材质和贴图。外置 BIN 与图片需随主文件一起提供；动画可按片段选择播放。",
         "back": "返回创作工具"
     },
     navigation: {

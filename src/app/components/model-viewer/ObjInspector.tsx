@@ -53,18 +53,18 @@ export default function ObjInspector() {
     async function load(files: FileList | File[], paths = new Map<File, string>()) {
         reset();
         const all = Array.from(files);
-        const models = all.filter(file => /\.(obj|glb|gltf)$/i.test(file.name));
+        const models = all.filter(file => /\.(obj|glb|gltf|fbx)$/i.test(file.name));
         if (models.length !== 1 || (/\.obj$/i.test(models[0].name) && all.length !== 1)) { setError(t.typeError); return; }
         const file = models[0];
         if (exceedsModelLimit(all)) { setError(sizeError); return; }
         setFileName(all.map(file => paths.get(file) || file.webkitRelativePath || file.name).join(" · ")); setBusy(true);
-        if (/\.(glb|gltf)$/i.test(file.name)) {
+        if (/\.(glb|gltf|fbx)$/i.test(file.name)) {
             const current = generation.current;
             timer.current = setTimeout(() => { if (current === generation.current) { stop(); setBusy(false); setError(t.timeout); } }, 30000);
             try {
-                const { importGltf } = await import("../../../lib/model-viewer/gltf-import");
+                const importer = /\.fbx$/i.test(file.name) ? (await import("../../../lib/model-viewer/fbx-import")).importFbx : (await import("../../../lib/model-viewer/gltf-import")).importGltf;
                 if (current !== generation.current) return;
-                const next = await importGltf(file, all, paths);
+                const next = await importer(file, all, paths);
                 if (current !== generation.current) { next.dispose(); return; }
                 if (timer.current) clearTimeout(timer.current);
                 loaded.current = next; setAsset(next); setResult(next.summary); setBusy(false);
@@ -72,7 +72,7 @@ export default function ObjInspector() {
                 if (current !== generation.current) return;
                 if (timer.current) clearTimeout(timer.current);
                 const detail = error instanceof Error ? error.message : "";
-                setError(detail.startsWith("missing:") ? t.missing + detail.slice(8) : detail === "compression" ? t.compression : detail === "external" ? t.external : t.gltfError);
+                setError(detail.startsWith("missing:") ? t.missing + detail.slice(8) : detail === "compression" ? t.compression : detail === "external" ? t.external : /\.fbx$/i.test(file.name) ? t.fbxError : t.gltfError);
                 setBusy(false);
             }
             return;
@@ -104,8 +104,8 @@ export default function ObjInspector() {
                 <button type="button" onClick={() => folderInput.current?.click()} className="rounded-lg border border-[#D5DCE2] px-4 py-2 text-sm">{t.openFolder}</button>
                 <input ref={element => { folderInput.current = element; element?.setAttribute("webkitdirectory", ""); }} type="file" multiple aria-label={t.openFolder} className="hidden" onChange={e => { if (e.target.files?.length) load(e.target.files); e.target.value = ""; }} />
                 <button type="button" onClick={reset} className="rounded-lg border border-[#D5DCE2] px-4 py-2 text-sm">{t.clear}</button>
-                <span className="min-w-0 break-all text-sm">{fileName || "OBJ / GLB / glTF"}</span>
-                <input ref={input} type="file" multiple accept=".obj,.glb,.gltf,.bin,.png,.jpg,.jpeg,.webp" aria-label={t.open} className="hidden" onChange={e => { if (e.target.files?.length) load(e.target.files); e.target.value = ""; }} />
+                <span className="min-w-0 break-all text-sm">{fileName || "OBJ / GLB / glTF / FBX"}</span>
+                <input ref={input} type="file" multiple accept=".obj,.glb,.gltf,.fbx,.bin,.png,.jpg,.jpeg,.webp,.bmp,.tga" aria-label={t.open} className="hidden" onChange={e => { if (e.target.files?.length) load(e.target.files); e.target.value = ""; }} />
             </div>
             <div className="grid xl:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_minmax(0,1.2fr)]">
                 <aside className="min-w-0 space-y-6 border-b border-[#E1E5E8] p-5 xl:border-r xl:border-b-0">
@@ -134,7 +134,7 @@ export default function ObjInspector() {
                 </aside>
             </div>
             <div className="space-y-2 border-t border-[#E1E5E8] p-5 text-sm leading-6 text-[#526779]">
-                {result && <><p>{asset ? t.gltfNote : t.countNote}</p><p>{asset ? t.gltfMaterials : t.materialNote}</p></>}
+                {result && <><p>{asset ? t.sceneNote : t.countNote}</p><p>{asset ? t.sceneMaterials : t.materialNote}</p></>}
                 {!!result?.ignored.length && <p>{t.ignored}: {result.ignored.join(", ")}</p>}
             </div>
         </section>

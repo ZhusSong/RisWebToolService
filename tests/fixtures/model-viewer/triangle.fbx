@@ -1,0 +1,45 @@
+; FBX 7.4.0 project test fixture (ASCII)
+FBXHeaderExtension:  {
+	FBXHeaderVersion: 1003
+	FBXVersion: 7400
+}
+Objects:  {
+	AnimationStack: 10, "AnimStack::Move", "" {
+	}
+	AnimationLayer: 11, "AnimLayer::Base", "" {
+	}
+	AnimationCurveNode: 12, "AnimCurveNode::T", "" {
+	}
+	AnimationCurve: 13, "AnimCurve::X", "" {
+		KeyTime: *2 {
+			a: 0,46186158000
+		}
+		KeyValueFloat: *2 {
+			a: 0,2
+		}
+	}
+	Geometry: 1, "Geometry::Triangle", "Mesh" {
+		Vertices: *9 {
+			a: 0,0,0,2,0,0,0,3,0
+		}
+		PolygonVertexIndex: *3 {
+			a: 0,1,-3
+		}
+	}
+	Model: 2, "Model::Triangle", "Mesh" {
+		Version: 232
+		Properties70:  {
+			P: "Lcl Translation", "Lcl Translation", "", "A",0,0,0
+			P: "Lcl Rotation", "Lcl Rotation", "", "A",0,0,0
+			P: "Lcl Scaling", "Lcl Scaling", "", "A",1,1,1
+		}
+	}
+}
+Connections:  {
+	C: "OO",11,10
+	C: "OO",12,11
+	C: "OP",12,2,"Lcl Translation"
+	C: "OP",13,12,"d|X"
+	C: "OO",1,2
+	C: "OO",2,0
+}

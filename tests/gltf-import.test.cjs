@@ -9,11 +9,15 @@ const ts = require('typescript');
     global.ProgressEvent ??= class ProgressEvent extends Event { constructor(type, init) { super(type); Object.assign(this, init); } };
     const three = await import('three');
     const loader = await import('three/addons/loaders/GLTFLoader.js');
+    const shared = {};
+    new Function('require', 'exports', ts.transpileModule(fs.readFileSync(path.join(__dirname, '../src/lib/model-viewer/model-asset.ts'), 'utf8'), {
+        compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 }
+    }).outputText)(() => three, shared);
     const source = fs.readFileSync(path.join(__dirname, '../src/lib/model-viewer/gltf-import.ts'), 'utf8');
     const moduleObject = { exports: {} };
     vm.runInThisContext('(function(require,exports){' + ts.transpileModule(source, {
         compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 }
-    }).outputText + '\n})')(name => name === 'three' ? three : loader, moduleObject.exports);
+    }).outputText + '\n})')(name => name === 'three' ? three : name === './model-asset' ? shared : loader, moduleObject.exports);
     const { importGltf } = moduleObject.exports;
     const buffer = Buffer.from(new Float32Array([-1,0,0, 1,0,0, 0,2,0]).buffer);
     const doc = {

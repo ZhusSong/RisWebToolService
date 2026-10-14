@@ -7,6 +7,9 @@ const messages = {
     },
     modelViewer: {
         inspector: {
+            fbxError: "FBXを読み込めませんでした。バージョン、テクスチャ、モデルデータを確認し、FBX 7.xで再出力してください。",
+            sceneNote: "シーンのメッシュごとに頂点・三角形を集計します。サイズはノード変換適用後の読み込み時の姿勢の境界ボックスで、モデル座標の単位です。",
+            sceneMaterials: "GLB/glTFとFBXのマテリアル、テクスチャ、ボーン集計、クリップ再生に対応します。FBX固有のマテリアルや制約は完全に再現できない場合があります。外部テクスチャも指定してください。",
             animationCategory: "アニメーション種別（モデル内クリップ）",
             unnamedAnimation: "名前のないアニメーション",
             playAnimation: "再生 / 再開",
@@ -36,7 +39,7 @@ const messages = {
             "groups": "グループ",
             "materials": "マテリアル参照",
             "libraries": "MTL参照（未読み込み）",
-            "drop": "OBJ・GLB・glTFモデルをドロップ",
+            "drop": "OBJ・GLB・glTF・FBXモデルをドロップ",
             "local": "ファイルはブラウザー内で解析し、サーバーにアップロードしません。",
             "loading": "解析中…",
             "success": "解析完了",
@@ -51,7 +54,7 @@ const messages = {
             "bones": "ボーン",
             "animations": "アニメーション",
             "unsupported": "OBJ形式では非対応",
-            "typeError": "OBJ・GLB・glTFの主ファイルを1個選択してください。OBJは単一ファイルのみ対応。",
+            "typeError": "OBJ・GLB・glTF・FBXの主ファイルを1個選択してください。OBJは単一ファイルのみ対応。",
             "sizeError": "ファイルの合計が{limit} MiBを超えています。小さいモデルを使用してください。",
             "parseError": "解析に失敗しました。UTF-8の文字コード、頂点座標、面のインデックスを確認してください。",
             "timeout": "解析がタイムアウトしました。小さいモデルを使用してください。",
@@ -64,7 +67,7 @@ const messages = {
         "status": "OBJデータ解析",
         "detail": "OBJファイルをドロップして、ブラウザー内で形状データを確認できます。",
         "about": "モデル形式について",
-        "body": "OBJとglTF 2.0（GLB/glTF）に対応。OBJは灰色で表示し、GLB/glTFは階層・マテリアル・テクスチャを保持します。外部BINと画像も一緒に指定してください。アニメーションクリップを選んで再生できます。",
+        "body": "OBJ、FBX、glTF 2.0（GLB/glTF）に対応。OBJは灰色で表示し、GLB/glTFは階層・マテリアル・テクスチャを保持します。外部BINと画像も一緒に指定してください。アニメーションクリップを選んで再生できます。",
         "back": "制作ツールに戻る"
     },
     "navigation": {
@@ -81,7 +84,7 @@ const messages = {
     "tools": {
         modelViewer: {
             "title": "モデルビューア",
-            "description": "ローカルのOBJ・GLB・glTFを表示し、形状とシーン情報を確認。",
+            "description": "ローカルのOBJ・GLB・glTF・FBXを表示し、形状とシーン情報を確認。",
             "open": "ツールを開く"
         },
         "textCounter": {
