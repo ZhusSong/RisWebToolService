@@ -40,7 +40,7 @@ export default async function Home({
     const { messages } = await getServerI18n();
     const { category } = await searchParams;
     // Unknown or repeated category values show the complete home page.
-    const selectedCategory = category === "text-tools" || category === "websites" || category === "search" || category === "ai" || category === "entertainment"
+    const selectedCategory = category === "text-tools" || category === "creative-tools" || category === "websites" || category === "search" || category === "ai" || category === "entertainment"
         ? category
         : null;
     return (
@@ -128,8 +128,30 @@ export default async function Home({
                     </div>
                 </section>
                 <section
+                    id="creative-tools"
+                    hidden={selectedCategory !== null && selectedCategory !== "creative-tools"}
+                    aria-labelledby="creative-tools-title"
+                    className="w-full scroll-mt-6"
+                >
+                    <h2 id="creative-tools-title" className="mb-4 text-lg font-semibold text-[#354553]">
+                        {messages.navigation.creativeTools}
+                    </h2>
+                    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
+                        <Link href="/page_modelviewer" className={cardClass}>
+                            <div className="flex items-center gap-3">
+                                <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" className="h-9 w-9 shrink-0 text-[#526779]">
+                                    <path d="m12 3 9 5v8l-9 5-9-5V8Zm0 10 9-5M12 13 3 8m9 5v8" />
+                                </svg>
+                                <h3 className="text-xl font-semibold text-[#293845]">{messages.tools.modelViewer.title}</h3>
+                            </div>
+                            <p className={descriptionClass}>{messages.tools.modelViewer.description}</p>
+                            <span className={openClass}>{messages.tools.modelViewer.open} →</span>
+                        </Link>
+                    </div>
+                </section>
+                <section
                     id="websites"
-                    hidden={selectedCategory === "text-tools"}
+                    hidden={selectedCategory === "text-tools" || selectedCategory === "creative-tools"}
                     aria-labelledby="websites-title"
                     className="w-full scroll-mt-6"
                 >

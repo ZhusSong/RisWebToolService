@@ -44,6 +44,14 @@ export default async function Sidebar() {
                             <span>{messages.navigation.textTools}</span>
                         </span>
                     </Link>
+                    <Link href="/?category=creative-tools" className={`${styles.websiteToggle} ${styles.textToolLink}`}>
+                        <span className={styles.websiteLabel}>
+                            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" className={styles.categoryIcon}>
+                                <path d="m12 3 9 5v8l-9 5-9-5V8Zm0 10 9-5M12 13 3 8m9 5v8" />
+                            </svg>
+                            <span>{messages.navigation.creativeTools}</span>
+                        </span>
+                    </Link>
                     <details className={styles.websiteMenu}>
                         <summary className={styles.websiteToggle}>
                             <span className={styles.websiteLabel}>
