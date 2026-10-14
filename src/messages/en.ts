@@ -170,6 +170,7 @@ const messages = {
             "invalidLanguage": "Select a supported language.",
             "sameLanguage": "Source and target languages must be different.",
             "rateLimited": "Too many translation requests. Please try again later.",
+            requestTooLarge: "The request is too large. Shorten the text and try again.",
             "quotaExceeded": "The monthly translation quota has been used up. Please try again next month.",
             "unavailable": "Translation is temporarily unavailable. Please try again later.",
             "timeout": "The translation request timed out. Please try again.",

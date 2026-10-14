@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+    experimental: { serverActions: { bodySizeLimit: "32kb" } },
     // Preserve Node resolution of the Japanese parser's local dictionary.
     serverExternalPackages: ["kuroshiro", "kuroshiro-analyzer-kuromoji"],
     outputFileTracingIncludes: {

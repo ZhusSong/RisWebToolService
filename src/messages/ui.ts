@@ -1,6 +1,8 @@
 // UI phrases keyed by their Chinese source text.
 export const ui = {
     "zh-CN": {
+        "请求过于频繁，请一分钟后重试。": "请求过于频繁，请一分钟后重试。",
+        "登录请求过大或包含不支持的内容。": "登录请求过大或包含不支持的内容。",
         "选择语言": "选择语言",
         "正在切换语言…": "正在切换语言…",
         "语言切换失败，请重试。": "语言切换失败，请重试。",
@@ -58,6 +60,8 @@ export const ui = {
         "本站为运行统计记录访问 IP、访问次数及时间，仅供管理员查看，保留最近 30 天；过期数据在下次统计请求时清理。": "本站为运行统计记录访问 IP、访问次数及时间，仅供管理员查看，保留最近 30 天；过期数据在下次统计请求时清理。"
     },
     "en": {
+        "请求过于频繁，请一分钟后重试。": "Too many requests. Please try again in one minute.",
+        "登录请求过大或包含不支持的内容。": "The sign-in request is too large or contains unsupported content.",
         "选择语言": "Choose language",
         "正在切换语言…": "Changing language…",
         "语言切换失败，请重试。": "Could not change language. Please try again.",
@@ -115,6 +119,8 @@ export const ui = {
         "本站为运行统计记录访问 IP、访问次数及时间，仅供管理员查看，保留最近 30 天；过期数据在下次统计请求时清理。": "For site statistics, we record visitor IPs, visit counts and times. Only administrators can view them. We retain the last 30 days; expired records are removed on the next statistics request."
     },
     "ja": {
+        "请求过于频繁，请一分钟后重试。": "リクエストが多すぎます。1分後に再試行してください。",
+        "登录请求过大或包含不支持的内容。": "ログインリクエストが大きすぎるか、未対応の内容が含まれています。",
         "选择语言": "言語を選択",
         "正在切换语言…": "言語を切り替え中…",
         "语言切换失败，请重试。": "言語を切り替えられませんでした。再試行してください。",

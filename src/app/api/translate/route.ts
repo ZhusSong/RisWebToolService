@@ -1,3 +1,4 @@
+import { requestRetryAfter, readLimitedJson, RequestBodyError } from "../../../lib/request-guard";
 import Database from "better-sqlite3";
 import { mkdirSync } from "node:fs";
 import path from "node:path";
@@ -27,42 +28,6 @@ function fail(error: string, status: number) {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === "object" && value !== null;
-}
-
-// 限制请求体大小，避免读取过大的输入。
-async function readBody(request: Request): Promise<unknown> {
-    if (!request.body) {
-        throw new Error("Invalid request body.");
-    }
-
-    const reader = request.body.getReader();
-    const decoder = new TextDecoder();
-    let bytes = 0;
-    let content = "";
-
-    try {
-        while (true) {
-            const { done, value } = await reader.read();
-
-            if (done) {
-                break;
-            }
-
-            bytes += value.byteLength;
-
-            if (bytes > MAX_BODY_BYTES) {
-                await reader.cancel();
-                throw new Error("Request body too large.");
-            }
-
-            content += decoder.decode(value, { stream: true });
-        }
-
-        content += decoder.decode();
-        return JSON.parse(content);
-    } finally {
-        reader.releaseLock();
-    }
 }
 
 let analyticsDatabase: Database.Database | undefined;
@@ -98,11 +63,14 @@ function recordSuccessfulTranslation() {
 }
 
 export async function POST(request: Request) {
+    const retry = requestRetryAfter("translate", request.headers);
+    if (retry) return Response.json({ error: "rateLimited" }, { status: 429, headers: { ...responseHeaders, "Retry-After": String(retry) } });
     let body: unknown;
 
     try {
-        body = await readBody(request);
-    } catch {
+        body = await readLimitedJson(request, MAX_BODY_BYTES);
+    } catch (error) {
+        if (error instanceof RequestBodyError) return fail(error.code, error.status);
         return fail("invalidRequest", 400);
     }
 

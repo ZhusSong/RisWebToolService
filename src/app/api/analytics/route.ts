@@ -2,6 +2,7 @@ import Database from "better-sqlite3";
 import { mkdirSync } from "node:fs";
 import path from "node:path";
 import { isAdminAuthenticated } from "../../../lib/admin-auth";
+import { requestRetryAfter, readLimitedJson, RequestBodyError } from "../../../lib/request-guard";
 
 import {
     getVisitorIp, initializeVisitorStats, pruneVisitorStats,
@@ -27,8 +28,18 @@ database.exec(`
 initializeVisitorStats(database);
 
 export async function POST(request: Request) {
+    const retry = requestRetryAfter("analytics", request.headers);
+    if (retry) return Response.json({ error: "rateLimited" }, { status: 429, headers: { "Retry-After": String(retry), "Cache-Control": "no-store" } });
+    let parsed: unknown;
+    try { parsed = await readLimitedJson(request, 4096); }
+    catch (error) {
+        if (error instanceof RequestBodyError) return Response.json({ error: error.code }, { status: error.status });
+        return Response.json({ error: "invalidRequest" }, { status: 400 });
+    }
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return Response.json({ error: "invalidRequest" }, { status: 400 });
+    const body = parsed as Record<string, unknown>;
+    if (body.toolName !== undefined && body.toolName !== null && (typeof body.toolName !== "string" || body.toolName.length > 128)) return Response.json({ error: "invalidRequest" }, { status: 400 });
     try {
-        const body = await request.json();
         const eventType =
             body.eventType === "page_view" || body.eventType === "tool_use"
                 ? body.eventType

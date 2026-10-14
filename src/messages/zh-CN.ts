@@ -169,6 +169,7 @@ const zhCN = {
             invalidLanguage: "请选择支持的语言。",
             sameLanguage: "原文语言与目标语言相同，请重新选择。",
             rateLimited: "翻译请求过于频繁，请稍后再试。",
+            requestTooLarge: "请求内容过大，请缩短文本后重试。",
             quotaExceeded: "本站本月翻译额度已用完，请下个月再试。",
             unavailable: "翻译服务暂不可用，请稍后再试。",
             timeout: "翻译请求超时，请稍后重试。",

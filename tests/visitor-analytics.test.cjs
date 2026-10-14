@@ -49,12 +49,14 @@ function load(file, overrides = {}) {
   assert.equal(stats.readVisitorStats(db).rows.length, 100);
   db.close();
   const routeDb = new Database(':memory:');
+  const guard = load('src/lib/request-guard.ts', { './visitor-analytics': stats });
   let authenticated = false;
   const route = load('src/app/api/analytics/route.ts', {
     'better-sqlite3': function () { return routeDb; },
     'node:fs': { mkdirSync() {} },
     '../../../lib/admin-auth': { isAdminAuthenticated: async () => authenticated },
     '../../../lib/visitor-analytics': stats,
+    '../../../lib/request-guard': guard,
   });
   const denied = await route.GET();
   assert.equal(denied.status, 401);
@@ -78,6 +80,20 @@ function load(file, overrides = {}) {
   delete process.env.ANALYTICS_TRUST_PROXY;
   await post('page_view','192.0.2.3');
   assert.equal(stats.readVisitorStats(routeDb).uniqueIps, 1);
+  const rowsBefore = routeDb.prepare('SELECT COUNT(*) AS n FROM analytics_events').get().n;
+  const raw = body => route.POST(new Request('http://localhost/api/analytics', {method:'POST',body}));
+  assert.equal((await raw('x'.repeat(4097))).status,413);
+  assert.equal((await raw('{')).status,400);
+  assert.equal((await raw('null')).status,400);
+  assert.equal((await raw(JSON.stringify({eventType:'tool_use',toolName:'x'.repeat(129)}))).status,400);
+  assert.equal(routeDb.prepare('SELECT COUNT(*) AS n FROM analytics_events').get().n,rowsBefore);
+  process.env.ANALYTICS_TRUST_PROXY = 'true';
+  for(let i=0;i<60;i++) assert.equal((await post('page_view','192.0.2.100')).status,200);
+  const limited = await post('page_view','192.0.2.100');
+  assert.equal(limited.status,429);
+  assert.ok(Number(limited.headers.get('retry-after'))>0);
+  assert.equal(routeDb.prepare('SELECT COUNT(*) AS n FROM analytics_events').get().n,rowsBefore+60);
+  delete process.env.ANALYTICS_TRUST_PROXY;
   routeDb.close();
   console.log('PASS: proxy gate, IP normalization, forged headers/body, 30-day retention, aggregation, top-100 summary, auth protection and route integration (in-memory DB only).');
 })().catch(error => { console.error(error); process.exitCode=1; });

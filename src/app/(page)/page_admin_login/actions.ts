@@ -1,6 +1,8 @@
 "use server";
 import { allowAdminLoginAttempt } from "../../../lib/admin-login-limit";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
+import { requestRetryAfter } from "../../../lib/request-guard";
 import {
     verifyAdminCredentials,
     setAdminSessionCookie,
@@ -10,6 +12,15 @@ export async function loginAdmin(
     _previousState: { error: string },
     formData: FormData
 ): Promise<{ error: string }> {
+    if (requestRetryAfter("login", new Headers(await headers()))) {
+        return { error: "请求过于频繁，请一分钟后重试。" };
+    }
+    let bytes = 0;
+    for (const [key, value] of formData) {
+        if (typeof value !== "string") return { error: "登录请求过大或包含不支持的内容。" };
+        bytes += Buffer.byteLength(key, "utf8") + Buffer.byteLength(value, "utf8");
+        if (bytes > 8192) return { error: "登录请求过大或包含不支持的内容。" };
+    }
     const username = formData.get("username");
     const password = formData.get("password");
 
@@ -18,6 +29,9 @@ export async function loginAdmin(
         typeof password !== "string"
     ) {
         return { error: "请输入用户名和密码。" };
+    }
+    if (username.length > 64 || password.length > 1024 || formData.getAll("username").length !== 1 || formData.getAll("password").length !== 1) {
+        return { error: "登录请求过大或包含不支持的内容。" };
     }
 
     try {
