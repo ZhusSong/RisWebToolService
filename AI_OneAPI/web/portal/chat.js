@@ -6,6 +6,24 @@ const translations = {
 const $ = id => document.getElementById(id);
 let language = "zh-CN", history = [], controller = null, state = "ready", lastUsage = null;
 const t = key => translations[language][key];
+// One API v0.6.10 appends /#/?settings={"key":"sk-...","url":"..."}.
+// Never use the supplied endpoint; all requests stay on this origin.
+function importToken() {
+  const fragment = window.location.hash;
+  if (!fragment) return;
+  try {
+    window.history.replaceState(null, "", window.location.pathname);
+    const raw = new URLSearchParams(fragment.replace(/^#\/?\??/, "")).get("settings");
+    if (!raw) return;
+    const settings = JSON.parse(raw);
+    if (settings.url && new URL(settings.url).origin !== window.location.origin) throw new Error();
+    if (typeof settings.key !== "string" || !/^sk-[A-Za-z0-9_-]{10,256}$/.test(settings.key)) throw new Error();
+    $("token").value = settings.key;
+    state = "已自动载入所选令牌，本次聊天将使用该令牌的权限与额度。";
+  } catch {
+    state = "无法载入聊天令牌，请从本站令牌列表重新点击聊天，或手动填写。";
+  }
+}
 function render() {
   document.documentElement.lang = language;
   document.querySelectorAll("[data-i18n]").forEach(el => el.textContent = t(el.dataset.i18n));
@@ -50,4 +68,5 @@ $("composer").addEventListener("submit", async event => {
   } catch (error) {state = error.name === "AbortError" ? "stopped" : `${t("failed")}: ${error.message}`;}
   finally {clearTimeout(timeout); controller = null; busy(false); render();}
 });
+importToken();
 render();
