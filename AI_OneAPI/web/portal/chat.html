@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>RISTOOL AI Chat</title><link rel="stylesheet" href="/portal/style.css"><link rel="stylesheet" href="/portal/chat.css"><script src="/portal/chat.js" defer></script></head>
+<body>
+<header><a class="brand" href="/">RISTOOL <span>AI</span></a></header>
+<main><h1 data-i18n="title"></h1><p data-i18n="intro"></p>
+<section class="settings"><label><span data-i18n="token"></span><input id="token" type="password" autocomplete="off" spellcheck="false"></label><a href="/token" target="_blank" rel="noopener" data-i18n="tokens"></a><label><span data-i18n="model"></span><select id="model"><option value="gpt-5.6-sol">GPT-5.6 Sol</option><option value="gpt-6-astra">GPT-6 Astra</option></select></label><button id="clear" data-i18n="clear"></button><button id="forget" data-i18n="forget"></button></section>
+<p class="notice" data-i18n="privacy"></p><div id="conversation" role="log" aria-live="polite"></div>
+<form id="composer"><label for="prompt" data-i18n="prompt"></label><textarea id="prompt" rows="4" maxlength="12000" required></textarea><div class="actions"><button id="send" type="submit" class="button" data-i18n="send"></button><button id="stop" type="button" disabled data-i18n="stop"></button></div></form>
+<p id="status" role="status"></p><p id="usage"></p>
+</main></body></html>
