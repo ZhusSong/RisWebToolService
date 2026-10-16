@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>RISTOOL AI</title>
+  <link rel="stylesheet" href="/portal/style.css">
+  <script src="/portal/app.js" defer></script>
+</head>
+<body>
+  <header><a class="brand" href="/">RISTOOL <span>AI</span></a><label><span data-i18n="language">语言</span> <select id="language"><option value="zh-CN">中文</option><option value="ja">日本語</option><option value="en">English</option></select></label></header>
+  <main>
+    <section class="hero">
+      <div><p class="eyebrow" data-i18n="eyebrow">私人 AI 工作空间 · 基础阶段</p><h1 data-i18n="title">一个入口，管理你的 AI 使用。</h1><p class="lead" data-i18n="intro">为受邀成员提供独立账号、访问令牌与额度管理。先建立可靠的基础，再逐步开放创作工具。</p><div class="actions"><a class="button" href="/login" data-i18n="login">登录管理后台 →</a><a class="secondary" href="https://ristoolweb.com" data-i18n="tools">返回工具网站</a></div></div>
+      <aside class="status"><span class="status-label" data-i18n="service">网关状态</span><strong id="health" role="status" aria-live="polite">…</strong><p data-i18n="statusNote">在线状态仅表示网关响应，不代表模型已配置或额度可用。</p><button id="retry" type="button" data-i18n="refresh">重新检查</button></aside>
+    </section>
+    <section class="cards" aria-label="Features">
+      <article><span class="number">01</span><h2 data-i18n="account">独立账号</h2><p data-i18n="accountText">由管理员邀请并创建账号。每位成员使用自己的身份，避免共享密钥。</p></article>
+      <article><span class="number">02</span><h2 data-i18n="quota">额度与令牌</h2><p data-i18n="quotaText">登录后台查看实际余额与使用记录。额度由管理员分配，不在入口页展示模拟数字。</p></article>
+      <article><span class="number">03</span><h2 data-i18n="future">接下来</h2><p data-i18n="futureText">网页聊天、本机文件分析和图片生成尚未接入。本阶段不上传文件，也不发起模型调用。</p></article>
+    </section>
+    <section class="notice"><h2 data-i18n="noticeTitle">使用前了解</h2><p data-i18n="notice">此入口不收集 API 密钥。上游密钥仅由管理员在后台配置。可使用的模型和额度以后台实际设置为准。</p></section>
+  </main>
+  <footer><span>RISTOOL AI</span><span data-i18n="footer">独立部署 · 按用户授权</span></footer>
+</body>
+</html>
