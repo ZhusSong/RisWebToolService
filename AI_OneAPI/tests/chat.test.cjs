@@ -8,7 +8,7 @@ function setup(fetch, fragment=''){
  const nodes=new Map();
  const node=id=>{if(!nodes.has(id))nodes.set(id,{value:'',children:[],addEventListener(n,fn){this[n]=fn},replaceChildren(){this.children=[]},append(...x){this.children.push(...x)},click(){this.clickHandler?.()}});return nodes.get(id)};
  const location={hash:fragment,pathname:'/chat/',origin:'https://ai.ristoolweb.com'};
- const context=vm.createContext({document:{getElementById:node,documentElement:{},querySelectorAll:()=>[],createElement:()=>({append(){}})},window:{location,history:{replaceState(a,b,url){location.hash="";location.cleaned=url}},addEventListener(){}},URL,URLSearchParams,fetch,AbortController,TextEncoder,setTimeout,clearTimeout});
+ const context=vm.createContext({document:{getElementById:node,documentElement:{},querySelectorAll:()=>[],createElement:()=>({append(){}})},window:{tokenPicker:{preselect(key){node("token").value=key},load(){},setBusy(){},clear(){},async resolve(id){return id}},location,history:{replaceState(a,b,url){location.hash="";location.cleaned=url}},addEventListener(){}},URL,URLSearchParams,fetch,AbortController,TextEncoder,setTimeout,clearTimeout});
  vm.runInContext(source,context);if(!fragment)node('token').value='test-user-token';node('model').value='gpt-5.6-sol';
  return {node,location,send:async text=>{node('prompt').value=text;await node('composer').submit({preventDefault(){}})}};
 }
@@ -24,7 +24,7 @@ test('permission failures retain draft without adding failed turns to history',a
 });
 test('stop aborts pending request and restores controls',async()=>{
  const p=setup((url,opts)=>new Promise((resolve,reject)=>opts.signal.addEventListener('abort',()=>reject(Object.assign(new Error(),{name:'AbortError'})))));
- const pending=p.send('hello');p.node('stop').click();await pending;assert.match(p.node('status').textContent,/扣费/);assert.equal(p.node('send').disabled,false);
+ const pending=p.send('hello');await new Promise(resolve=>setImmediate(resolve));p.node('stop').click();await pending;assert.match(p.node('status').textContent,/扣费/);assert.equal(p.node('send').disabled,false);
 });
 
 test('One API chat button imports selected token, clears fragment, sends to local endpoint',async()=>{
@@ -41,3 +41,4 @@ test('invalid or foreign settings never import a token and are removed from URL'
  }
  const p=setup(()=>{},'#/?settings=not-json');assert.equal(p.node('token').value,'');assert.equal(p.location.hash,'');
 });
+
