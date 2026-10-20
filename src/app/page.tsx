@@ -20,6 +20,7 @@ const openClass =
     "group-hover:text-[#1F2B35]";
 
 const websites = [
+    { key: "ristoolAI", category: "ai", href: "https://ai.ristoolweb.com/", logo: "logo_RistoolAI.svg" },
     { key: "bilibili", category: "entertainment", href: "https://www.bilibili.com/", logo: "logo_Bilibili.png" },
     { key: "google", category: "search", href: "https://www.google.com/", logo: "logo_Google.png" },
     { key: "chatgpt", category: "ai", href: "https://chatgpt.com/", logo: "logo_Chatgpt.png" },

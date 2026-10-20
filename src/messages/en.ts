@@ -99,6 +99,11 @@ const messages = {
         }
     },
     "websites": {
+        ristoolAI: {
+            title: "RISTOOL AI · Personal gateway",
+            description: "Sign in to your personal AI gateway and chat using your own token and selected model.",
+            open: "Open gateway (new tab)",
+        },
         "bilibili": {
             "title": "Bilibili",
             "description": "Visit Bilibili and discover videos you enjoy.",

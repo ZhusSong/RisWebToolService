@@ -97,6 +97,11 @@ const zhCN = {
         },
     },
     websites: {
+        ristoolAI: {
+            title: "RISTOOL AI · 个人中转站",
+            description: "登录个人 AI 中转站，选择自己的令牌与模型进行聊天。",
+            open: "进入中转站（新标签页）",
+        },
         bilibili: {
             title: "哔哩哔哩",
             description: "访问哔哩哔哩官网，探索感兴趣的视频内容。",
