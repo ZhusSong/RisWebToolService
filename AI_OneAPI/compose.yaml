@@ -1,5 +1,25 @@
 name: ristool-ai
 services:
+  history:
+    build: ./history
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3002:3002"
+    environment:
+      ONE_API_URL: http://one-api:3000
+      PUBLIC_ORIGIN: https://ai.ristoolweb.com
+    volumes:
+      - history-data:/data
+    mem_limit: 128m
+    cpus: 0.25
+    pids_limit: 64
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
   one-api:
     image: ${ONE_API_IMAGE:?Run scripts/manage.py init first}
     restart: unless-stopped
@@ -30,3 +50,5 @@ services:
       timeout: 5s
       retries: 3
       start_period: 30s
+volumes:
+  history-data:
