@@ -1,5 +1,28 @@
 name: ristool-ai
 services:
+  converter:
+    build:
+      context: ./files
+      dockerfile: Dockerfile.converter
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3004:3004"
+    environment:
+      CONVERTER_ORIGIN: https://ristoolweb.com
+    read_only: true
+    tmpfs:
+      - /tmp:size=128m,mode=1777
+    mem_limit: 768m
+    cpus: 1.0
+    pids_limit: 64
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
   files:
     build: ./files
     restart: unless-stopped
@@ -9,6 +32,7 @@ services:
       ONE_API_URL: http://one-api:3000
       PUBLIC_ORIGIN: https://ai.ristoolweb.com
       IMAGE_MODEL: ${IMAGE_MODEL:-}
+      CONVERTER_ORIGIN: https://ristoolweb.com
     read_only: true
     tmpfs:
       - /tmp:size=32m,mode=1777

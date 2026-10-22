@@ -12,6 +12,7 @@ from pathlib import Path
 ORIGIN = os.getenv('PUBLIC_ORIGIN', 'https://ai.ristoolweb.com')
 UPSTREAM = os.getenv('ONE_API_URL', 'http://one-api:3000').rstrip('/')
 IMAGE_MODEL = os.getenv('IMAGE_MODEL', '').strip()
+CONVERTER_ORIGIN = os.getenv('CONVERTER_ORIGIN', '').strip()
 SLOT = threading.BoundedSemaphore(1)
 MAX_BODY = 12 * 1024 * 1024
 
@@ -77,16 +78,18 @@ class Handler(BaseHTTPRequestHandler):
             self.reply(401, {'error': '请重新登录'})
 
     def do_POST(self):
-        if self.path != '/files-api/process':
+        public = self.path == '/convert-api/process' and bool(CONVERTER_ORIGIN)
+        if self.path != '/files-api/process' and not public:
             return self.reply(404, {'error': '地址不存在'})
-        if self.headers.get('Origin') != ORIGIN:
+        if self.headers.get('Origin') != (CONVERTER_ORIGIN if public else ORIGIN):
             return self.reply(403, {'error': '来源校验失败'})
         if not SLOT.acquire(blocking=False):
             return self.reply(429, {'error': '文件服务忙，请稍后手动重试；本次未调用模型'})
         try:
             cookie, expected = self.headers.get('Cookie', ''), self.headers.get('X-History-User', '')
             try:
-                authorize(cookie, expected)
+                if not public:
+                    authorize(cookie, expected)
             except Exception:
                 return self.reply(401, {'error': '请重新登录后处理文件'})
             size = int(self.headers.get('Content-Length', '0'))
@@ -96,16 +99,22 @@ class Handler(BaseHTTPRequestHandler):
             if not isinstance(data, dict):
                 raise ValueError()
             try:
-                owner, key = authorize(cookie, expected, data.get('token_id', ''))
+                if public:
+                    # Dedicated local entry point: ignore all client-supplied AI parameters.
+                    data = {'mode': 'convert', 'prompt': 'Convert the document', 'format': data.get('format'), 'files': data.get('files')}
+                    owner, key = None, None
+                else:
+                    owner, key = authorize(cookie, expected, None if data.get('mode') == 'convert' else data.get('token_id', ''))
             except Exception:
                 return self.reply(403, {'error': '登录状态或所选令牌不可用，请刷新令牌'})
             # Pass secrets via a pipe, never argv, environment, disk, logs or response.
             job = {'request': data, 'key': key, 'upstream': UPSTREAM, 'image_model': IMAGE_MODEL}
             result = subprocess.run([sys.executable, '-B', str(Path(__file__).with_name('worker.py'))],
                                     input=json.dumps(job).encode(), stdout=subprocess.PIPE,
-                                    stderr=subprocess.DEVNULL, timeout=220, check=True)
+                                    stderr=subprocess.DEVNULL, timeout=55 if public else 220, check=True)
             output = json.loads(result.stdout)
-            output['user_id'] = owner
+            if not public:
+                output['user_id'] = owner
             self.reply(400 if 'error' in output else 200, output)
         except subprocess.TimeoutExpired:
             self.reply(504, {'error': '处理超时，临时任务已结束；上游可能已扣费，请勿自动重试'})

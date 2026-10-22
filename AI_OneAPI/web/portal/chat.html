@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="zh-CN">
 <!-- Bump this asset version together when deploying changed chat CSS or scripts. -->
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>RISTOOL AI · 聊天</title><link rel="stylesheet" href="/portal/chat.css?v=20261022-1"><script src="/portal/token-picker.js?v=20261022-1" defer></script><script src="/portal/chat-export.js?v=20261022-1" defer></script><script src="/portal/file-tools.js?v=20261022-1" defer></script><script src="/portal/chat.js?v=20261022-1" defer></script></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>RISTOOL AI · 聊天</title><link rel="stylesheet" href="/portal/chat.css?v=20261022-2"><script src="/portal/token-picker.js?v=20261022-2" defer></script><script src="/portal/chat-export.js?v=20261022-2" defer></script><script src="/portal/file-tools.js?v=20261022-2" defer></script><script src="/portal/chat.js?v=20261022-2" defer></script></head>
 <body>
 <aside id="sidebar">
 <a class="brand" href="/token" target="_top">RISTOOL <span>AI</span></a>
@@ -18,11 +18,12 @@
 <div id="scroll-area"><section id="welcome"><div class="welcome-icon">✳</div><h1>今天想聊些什么？</h1><p>开始一个问题，或从左侧继续之前的对话。</p><div class="suggestions"><button data-prompt="帮我梳理一个想法">梳理一个想法</button><button data-prompt="帮我解释一段代码">解释一段代码</button><button data-prompt="帮我制定一个学习计划">制定学习计划</button></div></section><div id="conversation" role="log" aria-live="polite"></div></div>
 <div class="composer-area"><form id="composer"><label class="sr-only" for="prompt">消息</label><textarea id="prompt" rows="2" maxlength="12000" placeholder="输入消息…" required></textarea><div class="composer-actions"><span>Enter 发送 · Shift+Enter 换行</span><button id="stop" type="button" disabled>停止等待</button><button id="send" type="submit">发送 ↑</button></div></form><p id="status" role="status"></p><p id="usage"></p><p class="footnote">对话保存在你的账号中。AI 回答可能有误，请核实重要信息。</p></div>
 <details class="settings" id="file-settings"><summary>附件与文件输出（临时处理）</summary>
-<div class="settings-content"><label for="work-mode">模式</label><select id="work-mode"><option value="document">文字 / 图片理解 / 文档处理</option><option value="image">生成 / 编辑图片（需配置生图渠道）</option></select>
+<div class="settings-content"><label for="work-mode">模式</label><select id="work-mode"><option value="document">AI 文字 / 图片理解 / 文档处理</option><option value="convert">直接格式转换（不调用 AI）</option><option value="image">生成 / 编辑图片（需配置生图渠道）</option></select>
 <label for="output-format">输出</label><select id="output-format"><option value="text">文字回答</option><option>txt</option><option>md</option><option>csv</option><option>json</option><option>docx</option><option>xlsx</option><option>pdf</option><option>pptx</option><option>zip</option></select>
 <label for="uploads">上传附件</label><input id="uploads" type="file" multiple accept=".png,.jpg,.jpeg,.webp,.txt,.md,.csv,.json,.pdf,.docx,.xlsx,.pptx,.zip"><button id="remove-uploads" type="button">清除附件和下载结果</button></div>
-<p>最多 4 个文件，单个 5 MiB、总计 8 MiB。ZIP 最多 20 项，解压合计 20 MiB，不支持嵌套压缩包、宏或加密文件。PDF 只读取文字。文档输出重新排版；CSV/XLSX 按段落分行，ZIP 包含回答的 MD/JSON。</p>
-<p>附件会提交给模型服务；本站不长期保存文件或提取原文，只保存文字问答。生成图片固定输出 PNG（1024×1024 请求），参考图限一张；此模式忽略文档输出格式。刷新后需重新上传或生成。下载位置由浏览器设置决定。</p>
+<p>只需转换格式时请选择“直接格式转换”：上传一个文字文档，选择输出格式，再填写“转换”并发送。无需令牌、不调用模型；忽略输入的改写要求，按原文生成。最多 60000 字符，不保留复杂版式。</p>
+<p>AI 处理最多 4 个文件，单个 5 MiB、总计 8 MiB。ZIP 最多 20 项，解压合计 20 MiB，不支持嵌套压缩包、宏或加密文件。PDF 只读取文字。文档输出重新排版；CSV/XLSX 按段落分行，ZIP 包含回答的 MD/JSON。</p>
+<p>AI 模式会将附件内容提交给模型服务；直接转换模式仅在本站处理。本站不长期保存文件或提取原文，只保存文字问答或转换提示。生成图片固定输出 PNG（1024×1024 请求），参考图限一张；此模式忽略文档输出格式。刷新后需重新上传或生成。下载位置由浏览器设置决定。</p>
 </details>
 <div id="file-result" class="settings" aria-live="polite"></div>
 </main></body></html>

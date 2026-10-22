@@ -82,6 +82,15 @@ const messages = {
         "entertainment": "エンタメ"
     },
     "tools": {
+        fileConverter: {
+            noTables: "罫線付き表は検出されませんでした。Excel には各ページの文字とページ画像を含み、表は再構成していません。",
+            title: "文書形式変換", description: "Word・Excel・PowerPoint を PDF に、PDF を Word・Excel・スライドに変換します。ログイン・AI は不要です。", open: "変換を開く",
+            choose: "文書を選択", format: "出力形式", convert: "変換する", working: "変換中…", download: "結果をダウンロード",
+            size: "空でない 5 MiB 以下のファイルを選択してください。", busy: "混雑しています。時間をおいて再試行してください。", invalid: "読み取れません。形式、内容、制限を確認してください。", unavailable: "変換サービスを利用できません。後で再試行してください。",
+            pageLimit: "入力 PDF または Office からの PDF 出力は最大 20 ページです。文書を分割してください。", scannedPdf: "スキャン・文字のないページは編集可能な Word/Excel に変換できません。画像スライドには対応しています。", unsafeOffice: "暗号化・マクロ・埋め込みオブジェクト・外部データリンクは非対応です。", outputLimit: "出力が 16 MiB を超えています。文書を分割してください。",
+            limits: "1 ファイル最大 5 MiB、PDF 最大 20 ページ。DOC/DOCX・XLS/XLSX・PPT/PPTX・ODT/ODS/ODP から PDF は配置・画像・表を可能な範囲で保持します。フォントや改ページは変わる場合があります。PDF から Word は編集可能な内容を再構成し、Excel は罫線付き表・各ページの文字・照合用ページ画像を出力します（数式・元ブック構造は復元しません）。PPTX は各ページを編集不可の画像として配置します。OCR は非対応です。その他の変換は文字の再配置で、最大 60,000 文字です。",
+            privacy: "ファイルはサーバーへ送信して一時処理します。AI は使用せず、ファイルや変換履歴は保存しません。移動・再読み込みでダウンロードリンクは無効になります。保存先はブラウザー設定に従います。",
+        },
         modelViewer: {
             "title": "モデルビューア",
             "description": "ローカルのOBJ・GLB・glTF・FBXを表示し、形状とシーン情報を確認。",

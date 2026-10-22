@@ -80,6 +80,15 @@ const zhCN = {
         entertainment: "娱乐",
     },
     tools: {
+        fileConverter: {
+            noTables: "未检测到有框线表格，本次 Excel 包含各页文字和页面图片，没有重建表格。",
+            title: "文件格式转换", description: "Word、Excel、PowerPoint 转 PDF；PDF 转 Word、Excel 或幻灯片。无需登录，不使用 AI。", open: "开始转换",
+            choose: "选择文档", format: "输出格式", convert: "转换文件", working: "正在转换…", download: "下载结果",
+            size: "请选择非空且不超过 5 MiB 的文件。", busy: "服务繁忙，请稍后重试。", invalid: "无法读取此文件，请检查格式、内容或文件限制。", unavailable: "转换服务暂不可用，请稍后重试。",
+            pageLimit: "PDF 输入或 Office 导出的 PDF 最多 20 页，请拆分后重试。", scannedPdf: "文件包含扫描页或无文字页，暂不支持转换为可编辑 Word/Excel。可转为图片幻灯片。", unsafeOffice: "不支持加密文件、宏、嵌入对象或外部数据链接。", outputLimit: "生成文件超过 16 MiB，请拆分后重试。",
+            limits: "每次一个文件，最多 5 MiB，PDF 最多 20 页。DOC/DOCX、XLS/XLSX、PPT/PPTX、ODT/ODS/ODP 转 PDF 尽量保留排版、图片和表格，字体及分页可能变化。PDF 转 Word 尽量重建可编辑内容；转 Excel 提取有框线表格，附各页文字和页面图片供核对，不恢复公式或原工作簿；转 PPTX 每页为一张不可编辑的页面图片。扫描页暂不支持 OCR。其他文字转换仍为提取文字后重新排版，最多 60,000 字符。",
+            privacy: "文件会上传到服务器临时处理，不调用 AI、不保存文件或转换历史。离开或刷新页面后下载链接失效，下载位置由浏览器设置决定。",
+        },
         modelViewer: {
             "title": "模型查看",
             "description": "本地查看 OBJ、GLB 和 glTF 模型，读取几何与场景数据。",

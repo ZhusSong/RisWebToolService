@@ -192,10 +192,11 @@ def artifact(text, fmt):
         from reportlab.pdfbase import pdfmetrics
         from reportlab.pdfbase.cidfonts import UnicodeCIDFont
         from reportlab.lib.styles import ParagraphStyle
-        from reportlab.platypus import SimpleDocTemplate, Paragraph
-        pdfmetrics.registerFont(UnicodeCIDFont('STSong-Light'))
-        style = ParagraphStyle('Chinese', fontName='STSong-Light', fontSize=11, leading=17, wordWrap='CJK')
-        SimpleDocTemplate(output).build([Paragraph(escape(line) or ' ', style) for line in text.splitlines()])
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+        font = 'HeiseiMin-W3' if any('\u3040' <= char <= '\u30ff' for char in text) else 'STSong-Light'
+        pdfmetrics.registerFont(UnicodeCIDFont(font))
+        style = ParagraphStyle('CJK', fontName=font, fontSize=11, leading=17, wordWrap='CJK')
+        SimpleDocTemplate(output).build([Paragraph(escape(line), style) if line.strip() else Spacer(1, style.leading) for line in text.splitlines()])
         raw = output.getvalue()
         mime = 'application/pdf'
     elif fmt == 'pptx':
@@ -244,8 +245,25 @@ def process(job):
     prompt, fmt, mode = data.get('prompt'), data.get('format', 'text'), data.get('mode', 'document')
     if not isinstance(prompt, str) or not 1 <= len(prompt.strip()) <= 12000 or fmt not in OUTPUTS:
         raise ValueError('请输入指令并选择有效的输出格式')
-    if mode not in {'document', 'image'}:
+    if mode not in {'document', 'image', 'convert'}:
         raise ValueError('处理模式无效')
+    if mode == 'convert':
+        files = data.get('files', [])
+        if not isinstance(files, list) or len(files) != 1 or fmt == 'text':
+            raise ValueError('直接转换需要一个文档，并选择文件输出格式')
+        file = files[0]
+        if not isinstance(file, dict) or not isinstance(file.get('name'), str) or len(file['name']) > 200:
+            raise ValueError('文件名无效')
+        if PurePosixPath(file['name']).suffix.lower() not in DOCUMENTS:
+            raise ValueError('直接转换仅支持文字文档，不支持图片或 ZIP')
+        raw = base64.b64decode(file.get('data', ''), validate=True)
+        if not 0 < len(raw) <= MAX_FILE:
+            raise ValueError('文档不能为空且不能超过 5 MiB')
+        text = extract(file['name'], raw)
+        if not text.strip() or len(text) > TEXT_LIMIT:
+            raise ValueError('正文不能为空且不能超过 60000 字符，请拆分文件')
+        return {'text': '已直接转换为 ' + fmt.upper() + ' 文件，未调用模型，不消耗模型额度。请下载保存；原文和文件不写入历史记录。',
+                'artifact': artifact(text, fmt), 'model': 'local-converter'}
     if mode == 'image' and not job.get('image_model'):
         raise ValueError('管理员尚未配置生图模型，本次未调用模型')
     context = data.get('messages', [])

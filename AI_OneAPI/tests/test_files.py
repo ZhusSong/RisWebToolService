@@ -23,6 +23,23 @@ def upload(name, raw):
     return {'name': name, 'data': base64.b64encode(raw).decode()}
 
 class FileTests(unittest.TestCase):
+    def test_direct_conversion_preserves_source_without_model_or_history_leak(self):
+        source = '志望動機\n\n私はゲームが好きです。\n第二段落。'
+        job = {'request':{'prompt':'Convert this file','mode':'convert','format':'pdf',
+                         'files':[upload('input.txt',source.encode())]}}
+        with patch.object(w,'request_model') as model:
+            result=w.process(job)
+            model.assert_not_called()
+        self.assertNotIn(source,result['text'])
+        restored=w.extract('output.pdf',base64.b64decode(result['artifact']['data']))
+        self.assertIn('私はゲームが好きです。',restored)
+        self.assertIn('第二段落。',restored)
+        job['request']['format']='md'
+        self.assertEqual(base64.b64decode(w.process(job)['artifact']['data']).decode(),source)
+        job['request']['files'].append(upload('extra.txt',b'hello'))
+        with self.assertRaises(ValueError):
+            w.process(job)
+
     def test_document_roundtrips(self):
         text = '中文测试\nHello world\n第二段'
         for fmt in ['txt','md','docx','xlsx','pptx','pdf']:
@@ -96,6 +113,30 @@ class FileTests(unittest.TestCase):
     def test_token_owner_and_expiry(self):
         with patch.object(s,'account_get',return_value={'id':2}), self.assertRaises(ValueError):
             s.authorize('session','1',4)
+
+    def test_public_converter_forces_local_mode(self):
+        server = s.ThreadingHTTPServer(('127.0.0.1',0),s.Handler)
+        thread = threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+        try:
+            with patch.object(s,'CONVERTER_ORIGIN','https://ristoolweb.com'), patch.object(s,'authorize') as auth, patch.object(s.subprocess,'run') as run:
+                run.return_value.stdout=b'{"text":"done"}'
+                req=urllib.request.Request(f'http://127.0.0.1:{server.server_port}/convert-api/process',
+                    data=json.dumps({'mode':'image','token_id':4,'format':'pdf','files':[]}).encode(),
+                    headers={'Origin':'https://ristoolweb.com'})
+                with urllib.request.urlopen(req) as response:
+                    self.assertNotIn('user_id',json.load(response))
+                auth.assert_not_called()
+                job=json.loads(run.call_args.kwargs['input'])
+                self.assertEqual(job['request']['mode'],'convert')
+                self.assertNotIn('token_id',job['request'])
+                self.assertIsNone(job['key'])
+                req.headers['Origin']='https://evil.example'
+                with self.assertRaises(urllib.error.HTTPError) as error:
+                    urllib.request.urlopen(req)
+                self.assertEqual(error.exception.code,403)
+                error.exception.close()
+        finally:
+            server.shutdown();server.server_close();thread.join()
 
     def test_http_auth_origin_and_worker_boundary(self):
         server = s.ThreadingHTTPServer(('127.0.0.1',0),s.Handler)

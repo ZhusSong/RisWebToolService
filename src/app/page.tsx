@@ -73,6 +73,11 @@ export default async function Home({
                     </h2>
 
                     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
+                        <Link href="/page_fileconverter" className={cardClass}>
+                            <h3 className="text-xl font-semibold text-[#293845]">{messages.tools.fileConverter.title}</h3>
+                            <p className={descriptionClass}>{messages.tools.fileConverter.description}</p>
+                            <span className={openClass}>{messages.tools.fileConverter.open} →</span>
+                        </Link>
                         <Link
                             href="/page_textcounter"
                             className={cardClass}

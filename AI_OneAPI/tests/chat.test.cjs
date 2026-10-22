@@ -53,3 +53,11 @@ test('file processing saves only text and does not issue a duplicate model reque
  assert.equal(p.calls.filter(call=>call.url==='/v1/chat/completions').length,0);
  assert.equal(shown,true);
 });
+test('direct conversion works without a model token',async()=>{
+ const fileTools={busy(){},clearResult(){},clear(){},active:()=>true,direct:()=>true,async process(){return {text:'Converted locally'}},show(){}};
+ const p=await setup(()=>{throw new Error('unexpected model call')},fileTools);
+ p.node('token').value='';
+ await p.send('Convert this file');
+ assert.equal(p.saved.get('1').messages[1].content,'Converted locally');
+ assert.equal(p.calls.filter(call=>call.url==='/v1/chat/completions').length,0);
+});

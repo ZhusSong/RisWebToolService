@@ -82,6 +82,15 @@ const messages = {
         "entertainment": "Entertainment"
     },
     "tools": {
+        fileConverter: {
+            noTables: "No ruled tables detected. Excel contains page text and page-image previews, without reconstructed tables.",
+            title: "Document converter", description: "Convert Word, Excel and PowerPoint to PDF, or PDF to Word, Excel and slides. No account or AI required.", open: "Open converter",
+            choose: "Choose document", format: "Output format", convert: "Convert file", working: "Converting…", download: "Download result",
+            size: "Choose a non-empty file up to 5 MiB.", busy: "Service is busy. Try again later.", invalid: "Cannot read this file. Check its format, content and limits.", unavailable: "Conversion is unavailable. Try again later.",
+            pageLimit: "PDF input or Office PDF output is limited to 20 pages. Split the document.", scannedPdf: "Scanned or text-free pages cannot become editable Word/Excel yet. Image slides are supported.", unsafeOffice: "Encrypted files, macros, embedded objects and external data links are unsupported.", outputLimit: "Output exceeds 16 MiB. Split the document.",
+            limits: "One file up to 5 MiB; PDF up to 20 pages. DOC/DOCX, XLS/XLSX, PPT/PPTX and ODT/ODS/ODP to PDF preserve layout, images and tables where possible; fonts and pagination may change. PDF to Word reconstructs editable content. Excel extracts ruled tables plus page text and page-image previews, without original formulas or workbook structure. PPTX uses one non-editable page image per slide. No OCR. Other conversions reformat extracted text, up to 60,000 characters.",
+            privacy: "Files are uploaded for temporary server processing. No AI calls, stored files or conversion history. Download links expire when you leave or reload. Your browser controls the download folder.",
+        },
         modelViewer: {
             "title": "Model viewer",
             "description": "View local OBJ, GLB and glTF models and inspect geometry and scene data.",

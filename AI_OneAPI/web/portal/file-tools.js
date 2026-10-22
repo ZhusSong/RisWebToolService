@@ -30,7 +30,8 @@ window.fileTools = (() => {
   window.addEventListener("pagehide", clear);
   return {
     clear, clearResult, show,
-    active() { return $("uploads").files.length > 0 || $("work-mode").value === "image" || $("output-format").value !== "text"; },
+    direct() { return $("work-mode").value === "convert"; },
+    active() { return $("uploads").files.length > 0 || $("work-mode").value !== "document" || $("output-format").value !== "text"; },
     busy(value) { for (const id of ["uploads", "work-mode", "output-format", "remove-uploads"]) $(id).disabled = value; },
     async process({owner, tokenId, prompt, messages, model, signal}) {
       const selected = Array.from($("uploads").files);

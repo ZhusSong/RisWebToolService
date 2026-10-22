@@ -1,0 +1,9 @@
+FROM python:3.12-slim
+WORKDIR /app
+RUN apt-get update && apt-get install -y --no-install-recommends libreoffice-writer libreoffice-calc libreoffice-impress fonts-noto-cjk fonts-liberation libseccomp2 && rm -rf /var/lib/apt/lists/*
+COPY requirements.txt requirements-converter.txt ./
+RUN pip install --no-cache-dir -r requirements-converter.txt && useradd --uid 10003 --create-home converter
+COPY worker.py converter_worker.py converter_server.py ./
+ENV OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1
+USER converter
+CMD ["python", "-B", "converter_server.py"]

@@ -2,8 +2,9 @@ import "server-only";
 import { getVisitorIp } from "./visitor-analytics";
 
 type Bucket = { count: number; expires: number };
-export type GuardScope = "analytics" | "translate" | "login";
+export type GuardScope = "analytics" | "translate" | "login" | "convert";
 const policies = {
+    convert: { global: 20, client: 6 },
     analytics: { global: 300, client: 60 },
     translate: { global: 100, client: 20 },
     login: { global: 30, client: 5 },
