@@ -103,7 +103,11 @@ class ConverterTests(unittest.TestCase):
             raw = io.BytesIO(); document.save(raw)
             result = w.convert(request(raw.getvalue(), suffix, 'pdf'))
             pdf = PdfReader(io.BytesIO(base64.b64decode(result['artifact']['data'])))
-            self.assertIn(expected, ''.join(page.extract_text() for page in pdf.pages))
+            extracted = ''.join(page.extract_text() or '' for page in pdf.pages)
+            # PDF glyph positioning can insert spaces inside words on Linux.
+            # Ignore whitespace only; missing or reordered characters still fail.
+            self.assertIn(''.join(expected.split()), ''.join(extracted.split()),
+                          f'{suffix} PDF text content mismatch: {extracted!r}')
 
     @unittest.skipUnless(sys.platform == 'linux', 'Linux sandbox check')
     def test_sandbox_blocks_network(self):
