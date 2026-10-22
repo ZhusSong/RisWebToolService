@@ -82,7 +82,7 @@ const zhCN = {
     tools: {
         fileConverter: {
             noTables: "未检测到有框线表格，本次 Excel 包含各页文字和页面图片，没有重建表格。",
-            title: "文件格式转换", description: "Word、Excel、PowerPoint 转 PDF；PDF 转 Word、Excel 或幻灯片。无需登录，不使用 AI。", open: "开始转换",
+            title: "文件格式转换", description: "Word、Excel、PowerPoint 转 PDF；PDF 转 Word、Excel 或幻灯片。", open: "开始转换",
             choose: "选择文档", format: "输出格式", convert: "转换文件", working: "正在转换…", download: "下载结果",
             size: "请选择非空且不超过 5 MiB 的文件。", busy: "服务繁忙，请稍后重试。", invalid: "无法读取此文件，请检查格式、内容或文件限制。", unavailable: "转换服务暂不可用，请稍后重试。",
             pageLimit: "PDF 输入或 Office 导出的 PDF 最多 20 页，请拆分后重试。", scannedPdf: "文件包含扫描页或无文字页，暂不支持转换为可编辑 Word/Excel。可转为图片幻灯片。", unsafeOffice: "不支持加密文件、宏、嵌入对象或外部数据链接。", outputLimit: "生成文件超过 16 MiB，请拆分后重试。",
