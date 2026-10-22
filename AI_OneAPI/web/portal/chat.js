@@ -7,6 +7,7 @@ function lock(value) {
   locked = value;
   for (const id of ["send","clear","model","prompt","rename","delete-chat","reload-history","retry-save"]) $(id).disabled = value;
   window.tokenPicker.setBusy(value);
+  window.fileTools?.busy(value);
   $("stop").disabled = !controller;
   $("export-chat").disabled = value || !current?.id;
   $("export-format").disabled = value;
@@ -15,11 +16,11 @@ async function api(path = "", method = "GET", data) {
   const response = await fetch(base + path, {method,credentials:"same-origin",cache:"no-store",redirect:"error",headers:{"Content-Type":"application/json",...(owner === null ? {} : {"X-History-User":String(owner)})},body:data ? JSON.stringify(data) : undefined,signal:AbortSignal.timeout(20000)});
   const body = await response.json();
   if (!response.ok) {
-    if (response.status === 401) {owner = null; current = null; items = []; window.tokenPicker.clear(); render();}
+    if (response.status === 401) {owner = null; current = null; items = []; window.tokenPicker.clear(); window.fileTools?.clear(); render();}
     throw new Error(body.error || `记录服务错误 (${response.status})`);
   }
   if (owner !== null && owner !== body.user_id) {
-    owner = null; current = null; items = []; window.tokenPicker.clear(); render();
+    owner = null; current = null; items = []; window.tokenPicker.clear(); window.fileTools?.clear(); render();
     throw new Error("登录账号已改变，请刷新页面。");
   }
   owner = body.user_id;
@@ -33,7 +34,7 @@ function renderList() {
     button.className = "session" + (item.id === current?.id ? " active" : "");
     button.textContent = item.title; button.title = item.title;
     button.setAttribute("aria-current", item.id === current?.id ? "true" : "false");
-    button.addEventListener("click",()=>run(async()=>{ if (!canLeave()) return; current = await api("/" + item.id); unsaved = false; $("model").value = current.model; const last=current.messages.at(-1); $("prompt").value = last?.role === "user" ? last.content : ""; render();status(last?.role === "user" ? "上次问题尚无回答，可重新发送。" : ""); }));
+    button.addEventListener("click",()=>run(async()=>{ if (!canLeave()) return; current = await api("/" + item.id); window.fileTools?.clear(); unsaved = false; $("model").value = current.model; const last=current.messages.at(-1); $("prompt").value = last?.role === "user" ? last.content : ""; render();status(last?.role === "user" ? "上次请求未保存回答，可能已扣费；重新发送会再次请求模型，附件须重新上传。" : ""); }));
     $("sessions").append(button);
   }
 }
@@ -83,7 +84,7 @@ $("export-chat").addEventListener("click",()=>run(async()=>{
   const filename = window.chatExport.download(saved, format);
   status(`已发起下载：${filename}。包含该会话的完整已保存问答。`);
 }));
-$("clear").addEventListener("click",()=>run(async()=>{if(!canLeave())return;current = null; unsaved = false;$("prompt").value="";$("usage").textContent="";status("");render();}));
+$("clear").addEventListener("click",()=>run(async()=>{if(!canLeave())return;window.fileTools?.clear();current = null; unsaved = false;$("prompt").value="";$("usage").textContent="";status("");render();}));
 $("reload-history").addEventListener("click",()=>run(refresh));
 $("search").addEventListener("input",renderList);
 $("rename").addEventListener("click",()=>run(async()=>{
@@ -110,6 +111,7 @@ $("composer").addEventListener("submit",event=>{
     const content=$("prompt").value.trim(),tokenId=$("token").value,model=$("model").value;
     if(!content||!tokenId)throw new Error("请在聊天设置中选择令牌，并填写消息。");
     await refresh();
+    window.fileTools?.clearResult();
     const stored=current?.messages || [];
     const before=stored.at(-1)?.role === "user" ? stored.slice(0,-1) : stored;
     const messages=[...before.map(({role,content})=>({role,content})),{role:"user",content}];
@@ -125,6 +127,21 @@ $("composer").addEventListener("submit",event=>{
     controller=new AbortController();const timer=setTimeout(()=>controller.abort(),180000);$("stop").disabled=false;
     status("正在生成回答…");
     try {
+      if (window.fileTools?.active()) {
+        clearTimeout(timer);
+        const fileTimer = setTimeout(()=>controller.abort(),240000);
+        try {
+          status("正在处理附件 / 生成文件…请保持页面打开。");
+          const result = await window.fileTools.process({owner,tokenId,prompt:content,messages:before.map(({role,content})=>({role,content})),model,signal:controller.signal});
+          // Persist only visible text. Never save uploads, extracted source text or output bytes.
+          current.messages.push({role:"assistant",content:result.text,model});unsaved=true;
+          $("prompt").value="";render();
+          window.fileTools.show(result.artifact);
+          try {await save();status(result.warning || "文字记录已保存。文件请及时点击下载，刷新后不保留。");}
+          catch(error){status(`结果已生成但文字保存失败：${error.message} 请重试保存，并及时下载文件。`);}
+        } finally {clearTimeout(fileTimer);}
+        return;
+      }
       const token=await window.tokenPicker.resolve(tokenId,controller.signal);
       const response=await fetch("/v1/chat/completions",{method:"POST",credentials:"omit",cache:"no-store",redirect:"error",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},body:payload,signal:controller.signal});
       if(!response.ok)throw new Error(`请求失败 (${response.status})，请检查令牌额度、模型权限或稍后重试。`);

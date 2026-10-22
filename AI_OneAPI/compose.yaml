@@ -1,5 +1,28 @@
 name: ristool-ai
 services:
+  files:
+    build: ./files
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3003:3003"
+    environment:
+      ONE_API_URL: http://one-api:3000
+      PUBLIC_ORIGIN: https://ai.ristoolweb.com
+      IMAGE_MODEL: ${IMAGE_MODEL:-}
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+    mem_limit: 512m
+    cpus: 0.75
+    pids_limit: 48
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
   history:
     build: ./history
     restart: unless-stopped

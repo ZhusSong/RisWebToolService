@@ -5,7 +5,7 @@ const fs=require('node:fs');
 const path=require('node:path');
 const source=fs.readFileSync(path.join(__dirname,'../web/portal/chat.js'),'utf8');
 const tick=()=>new Promise(resolve=>setImmediate(resolve));
-async function setup(modelFetch){
+async function setup(modelFetch, fileTools){
  const nodes=new Map(),calls=[],saved=new Map();let id=0;
  const make=()=>({value:'',children:[],addEventListener(n,fn){this[n]=fn},setAttribute(){},replaceChildren(...x){this.children=x},append(...x){this.children.push(...x)},focus(){}});
  const node=id=>{if(!nodes.has(id))nodes.set(id,make());return nodes.get(id)};
@@ -21,7 +21,7 @@ async function setup(modelFetch){
   return {ok:true,json:async()=>({...result,user_id:1})};
  };
  node('token').value='token-id';node('model').value='gpt-5.6-sol';
- const context=vm.createContext({document:{getElementById:node,querySelectorAll:()=>[],createElement:make,body:{classList:{add(){},toggle(){return false}}}},window:{tokenPicker:{preselect(){},load(){},setBusy(){},clear(){},async resolve(){return 'test-key'}},location:{hash:''},matchMedia:()=>({matches:false}),addEventListener(){},confirm:()=>true,prompt:()=>null},fetch,AbortController,AbortSignal,TextEncoder,setTimeout,clearTimeout});
+ const context=vm.createContext({document:{getElementById:node,querySelectorAll:()=>[],createElement:make,body:{classList:{add(){},toggle(){return false}}}},window:{fileTools,tokenPicker:{preselect(){},load(){},setBusy(){},clear(){},async resolve(){return 'test-key'}},location:{hash:''},matchMedia:()=>({matches:false}),addEventListener(){},confirm:()=>true,prompt:()=>null},fetch,AbortController,AbortSignal,TextEncoder,setTimeout,clearTimeout});
  vm.runInContext(source,context);await tick();
  return {node,calls,saved,send:async text=>{node('prompt').value=text;node('composer').submit({preventDefault(){}});await tick();await tick();}};
 }
@@ -42,4 +42,14 @@ test('failed generation persists question and retry does not duplicate it',async
 test('stop preserves unanswered question and unlocks interface',async()=>{
  const p=await setup((url,opts)=>new Promise((resolve,reject)=>opts.signal.addEventListener('abort',()=>reject(Object.assign(new Error(),{name:'AbortError'})))));
  await p.send('question');p.node('stop').click();await tick();assert.equal(p.node('send').disabled,false);assert.equal(p.saved.get('1').messages.length,1);assert.match(p.node('status').textContent,/扣费/);
+});
+test('file processing saves only text and does not issue a duplicate model request',async()=>{
+ let shown=false;
+ const fileTools={busy(){},clearResult(){},clear(){},active:()=>true,async process(){return {text:'文件总结',artifact:{data:'BINARY_PRIVATE'}}},show(){shown=true}};
+ const p=await setup(()=>{throw new Error('duplicate paid request')},fileTools);
+ await p.send('分析附件');
+ assert.equal(p.saved.get('1').messages[1].content,'文件总结');
+ assert.ok(!JSON.stringify([...p.saved.values()]).includes('BINARY_PRIVATE'));
+ assert.equal(p.calls.filter(call=>call.url==='/v1/chat/completions').length,0);
+ assert.equal(shown,true);
 });
