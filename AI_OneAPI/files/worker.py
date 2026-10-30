@@ -51,7 +51,9 @@ def image_png(raw):
             if image.format not in ('PNG', 'JPEG', 'WEBP'):
                 raise ValueError('图片内容必须为 PNG/JPEG/WebP')
             image.load()
-            image = image.convert('RGB')
+            # Keep alpha in generated and uploaded PNGs; RGB destroys transparent backgrounds.
+            has_alpha = image.mode in ('RGBA', 'LA') or 'transparency' in image.info
+            image = image.convert('RGBA' if has_alpha else 'RGB')
             image.thumbnail((2048, 2048))
             output = io.BytesIO()
             image.save(output, 'PNG')
@@ -303,6 +305,8 @@ def process(job):
         if len(instruction) > 16000:
             raise ValueError('生图文字上下文过长，请新建对话')
         params = {'model': job['image_model'], 'prompt': instruction, 'n': 1, 'size': '1024x1024'}
+        if re.search(r'透明.{0,4}背景|背景.{0,8}透明|无背景|去(?:除)?背景|移除背景', prompt):
+            params.update({'background': 'transparent', 'output_format': 'png'})
         if images:
             result = request_model(job, 'images/edits', data=params, files={'image': ('input.png', images[0], 'image/png')})
         else:

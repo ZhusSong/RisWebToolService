@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 import unittest
 import threading
+import subprocess
 import urllib.request
 import urllib.error
 from unittest.mock import patch
@@ -118,6 +119,41 @@ class FileTests(unittest.TestCase):
                 self.assertEqual(image.size,(128,128))
         with patch.object(w,'request_model',return_value={'data':[{'url':'http://127.0.0.1/private'}]}), self.assertRaises(ValueError):
             w.process(job)  # Never fetch provider-supplied URLs.
+
+    def test_image_edit_keeps_alpha_and_requests_transparent_png(self):
+        from PIL import Image
+        stream=io.BytesIO()
+        Image.new('RGBA',(16,16),(255,0,0,0)).save(stream,'PNG')
+        job={'request':{'prompt':'将图片背景变为透明','mode':'image','files':[upload('input.png',stream.getvalue())]},
+             'key':'x','upstream':'http://unused','image_model':'gpt-image-2.5-flare'}
+        with patch.object(w,'request_model',return_value={'data':[{'b64_json':base64.b64encode(stream.getvalue()).decode()}]}) as call:
+            result=w.process(job)
+        self.assertEqual(call.call_args.args[1],'images/edits')
+        self.assertEqual(call.call_args.kwargs['data']['background'],'transparent')
+        self.assertEqual(call.call_args.kwargs['data']['output_format'],'png')
+        with Image.open(io.BytesIO(call.call_args.kwargs['files']['image'][1])) as sent:
+            self.assertEqual(sent.mode,'RGBA')
+        with Image.open(io.BytesIO(base64.b64decode(result['artifact']['data']))) as saved:
+            self.assertEqual(saved.mode,'RGBA')
+            self.assertEqual(saved.getpixel((0,0))[3],0)
+
+    def test_worker_exit_reports_safe_code(self):
+        server=s.ThreadingHTTPServer(('127.0.0.1',0),s.Handler)
+        thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+        try:
+            with patch.object(s,'authorize',return_value=(1,'SECRET')),patch.object(s,'verify_conversation'),patch.object(s.subprocess,'run',side_effect=subprocess.CalledProcessError(-9,'worker')):
+                req=urllib.request.Request(f'http://127.0.0.1:{server.server_port}/files-api/process',
+                    data=json.dumps({'conversation':'00000000-0000-0000-0000-000000000001','token_id':'4','prompt':'edit'}).encode(),
+                    headers={'Origin':s.ORIGIN,'Cookie':'session','X-History-User':'1'})
+                with self.assertRaises(urllib.error.HTTPError) as error:
+                    urllib.request.urlopen(req)
+                with error.exception as response:
+                    body=json.load(response)
+                self.assertEqual(response.status,503)
+                self.assertIn('-9',body['error'])
+                self.assertNotIn('SECRET',json.dumps(body))
+        finally:
+            server.shutdown();server.server_close();thread.join()
 
     def test_token_owner_and_expiry(self):
         with patch.object(s,'account_get',return_value={'id':2}), self.assertRaises(ValueError):

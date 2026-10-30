@@ -185,11 +185,14 @@ class Handler(BaseHTTPRequestHandler):
             self.reply(400 if 'error' in output else 200, output)
         except subprocess.TimeoutExpired:
             self.reply(504, {'error': '处理超时，临时任务已结束；上游可能已扣费，请勿自动重试'})
+        except subprocess.CalledProcessError as error:
+            self.reply(503, {'error': f'文件处理进程异常退出（代码 {error.returncode}）。请管理员检查文件服务内存和容器状态；可能已产生模型费用'})
         except (BrokenPipeError, ConnectionResetError, TimeoutError):
             pass
         except (ValueError, TypeError):
             self.reply(400, {'error': '请求格式无效'})
-        except Exception:
+        except Exception as error:
+            print(f'file-service request error: {type(error).__name__}', file=sys.stderr, flush=True)
             self.reply(503, {'error': '处理失败，可能已产生模型费用；请检查服务配置'})
         finally:
             SLOT.release()
