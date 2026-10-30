@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Sidebar from "./components/Sidebar";
@@ -20,7 +21,7 @@ export async function generateMetadata(): Promise<Metadata> {
     return { title: messages.site.name, description: messages.site.description };
 }
 
-export default async function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: { children: ReactNode }) {
   const { locale, t } = await getServerI18n();
   return (
     <html

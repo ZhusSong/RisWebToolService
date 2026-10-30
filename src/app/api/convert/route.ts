@@ -7,6 +7,17 @@ const headers = { "Cache-Control": "no-store", "X-Content-Type-Options": "nosnif
 function fail(error: string, status: number) { return Response.json({ error }, { status, headers }); }
 function record(value: unknown): value is Record<string, unknown> { return typeof value === "object" && value !== null; }
 
+export function convertedFileName(inputName: string, format: string): string {
+    const leafName = inputName.split(/[\\/]/).pop() ?? "";
+    const originalBaseName = leafName.replace(/\.[^.]+$/, "");
+    const safeBaseName = originalBaseName
+        .replace(/[<>:"/\\|?*\u0000-\u001f]/g, "_")
+        .replace(/[. ]+$/, "")
+        .trim();
+
+    return `${safeBaseName || "converted"}.${format}`;
+}
+
 export async function POST(request: Request) {
     try {
         const origin = request.headers.get("origin");
@@ -34,7 +45,7 @@ export async function POST(request: Request) {
         }
         const result = await response.json();
         if (!record(result) || !record(result.artifact) || typeof result.artifact.data !== "string") return fail("unavailable", 502);
-        return Response.json({ artifact: { name: `RISTOOL-result.${body.format}`, mime: "application/octet-stream", data: result.artifact.data }, warning: result.warning === 'noTables' ? 'noTables' : '' }, { headers });
+        return Response.json({ artifact: { name: convertedFileName(file.name, body.format), mime: "application/octet-stream", data: result.artifact.data }, warning: result.warning === 'noTables' ? 'noTables' : '' }, { headers });
     } catch (error) {
         return fail(error instanceof RequestBodyError ? (error.status === 413 ? "size" : "invalid") : "unavailable", error instanceof RequestBodyError ? error.status : 503);
     }

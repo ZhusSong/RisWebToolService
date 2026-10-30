@@ -1,0 +1,20 @@
+{
+  "version": "0.2.1",
+  "defaults": {
+    "cwd": "${workspaceRoot}"
+  },
+  "configurations": [
+    {
+      "type": "node",
+      "name": "RisWebToolService - Next.js 开发调试",
+      "request": "launch",
+      "program": "${workspaceRoot}/node_modules/next/dist/bin/next",
+      "args": ["dev"],
+      "env": {
+        "NODE_OPTIONS": "--enable-source-maps"
+      },
+      "console": "integratedTerminal",
+      "stopOnEntry": false
+    }
+  ]
+}
