@@ -86,6 +86,13 @@ required to run the complete `AI_OneAPI` stack.
 
 ## Cross-device continuation
 
+At the start of a new Codex session, read `CODEX_PROJECT_STATE.md` for the
+latest project-specific conversation handoff. After completing a feature or
+resolving an incident, update that file with the outcome, verification,
+deployment steps, and any remaining work. Never copy raw chat transcripts,
+credentials, session secrets, or API keys into the repository. Every completed
+feature response must include the server-side update commands relevant to it.
+
 Before switching computers, commit and push code plus this file to `origin`.
 On the other computer, clone or pull the repository, install locked dependencies,
 create its own `.env.local`, and start a Codex chat from the repository root.
