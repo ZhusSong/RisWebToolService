@@ -35,6 +35,8 @@ services:
       FILES_INTERNAL_SECRET: ${SESSION_SECRET:?Missing session secret}
       ARTIFACT_DIR: /data/artifacts
       IMAGE_MODEL: ${IMAGE_MODEL:-}
+      IMAGE_EDIT_BASE_URL: ${IMAGE_EDIT_BASE_URL:-}
+      IMAGE_EDIT_API_KEY: ${IMAGE_EDIT_API_KEY:-}
       CONVERTER_ORIGIN: https://ristoolweb.com
     volumes:
       - artifact-data:/data

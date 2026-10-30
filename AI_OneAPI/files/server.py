@@ -16,6 +16,8 @@ import artifact_store
 ORIGIN = os.getenv('PUBLIC_ORIGIN', 'https://ai.ristoolweb.com')
 UPSTREAM = os.getenv('ONE_API_URL', 'http://one-api:3000').rstrip('/')
 IMAGE_MODEL = os.getenv('IMAGE_MODEL', '').strip()
+IMAGE_EDIT_BASE_URL = os.getenv('IMAGE_EDIT_BASE_URL', '').strip().rstrip('/')
+IMAGE_EDIT_API_KEY = os.getenv('IMAGE_EDIT_API_KEY', '').strip()
 CONVERTER_ORIGIN = os.getenv('CONVERTER_ORIGIN', '').strip()
 SLOT = threading.BoundedSemaphore(1)
 MAX_BODY = 12 * 1024 * 1024
@@ -169,7 +171,8 @@ class Handler(BaseHTTPRequestHandler):
             except Exception:
                 return self.reply(403, {'error': '登录状态或所选令牌不可用，请刷新令牌'})
             # Pass secrets via a pipe, never argv, environment, disk, logs or response.
-            job = {'request': data, 'key': key, 'upstream': UPSTREAM, 'image_model': IMAGE_MODEL}
+            job = {'request': data, 'key': key, 'upstream': UPSTREAM, 'image_model': IMAGE_MODEL,
+                   'image_edit_base_url': IMAGE_EDIT_BASE_URL, 'image_edit_api_key': IMAGE_EDIT_API_KEY}
             result = subprocess.run([sys.executable, '-B', str(Path(__file__).with_name('worker.py'))],
                                     input=json.dumps(job).encode(), stdout=subprocess.PIPE,
                                     stderr=subprocess.DEVNULL, timeout=55 if public else 220, check=True)

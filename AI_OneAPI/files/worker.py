@@ -308,7 +308,16 @@ def process(job):
         if re.search(r'透明.{0,4}背景|背景.{0,8}透明|无背景|去(?:除)?背景|移除背景', prompt):
             params.update({'background': 'transparent', 'output_format': 'png'})
         if images:
-            result = request_model(job, 'images/edits', data=params, files={'image': ('input.png', images[0], 'image/png')})
+            edit_url, edit_key = job.get('image_edit_base_url'), job.get('image_edit_api_key')
+            if not edit_url or not edit_key:
+                raise ValueError('管理员尚未配置图片编辑渠道；当前 One API 不支持图片编辑，本次未调用模型')
+            from urllib.parse import urlsplit
+            parsed = urlsplit(edit_url)
+            if (parsed.scheme != 'https' or not parsed.hostname or parsed.username or parsed.password
+                    or parsed.query or parsed.fragment or not isinstance(edit_key, str)):
+                raise ValueError('图片编辑渠道配置无效，本次未调用模型')
+            result = request_model({'upstream': edit_url, 'key': edit_key}, 'images/edits',
+                                   data=params, files={'image': ('input.png', images[0], 'image/png')})
         else:
             result = request_model(job, 'images/generations', json=params)
         encoded = (result.get('data') or [{}])[0].get('b64_json')

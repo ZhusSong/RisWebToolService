@@ -107,11 +107,13 @@ class FileTests(unittest.TestCase):
         with patch.object(w,'request_model') as call, self.assertRaises(ValueError):
             w.process(job)
         call.assert_not_called()
-        job['image_model']='configured-model'
+        job.update(image_model='configured-model', image_edit_base_url='https://edit.example', image_edit_api_key='provider-secret')
         job['request']['files']=[upload('input.png',stream.getvalue())]
         with patch.object(w,'request_model',return_value={'data':[{'b64_json':base64.b64encode(stream.getvalue()).decode()}]}) as call:
             self.assertEqual(w.process(job)['artifact']['mime'],'image/png')
             self.assertEqual(call.call_args.args[1],'images/edits')
+            self.assertEqual(call.call_args.args[0]['upstream'],'https://edit.example')
+            self.assertEqual(call.call_args.args[0]['key'],'provider-secret')
             job['request']['prompt']='生成一张木质破旧十字架的像素图片，像素大小为128*128像素，命名为Test01'
             generated=w.process(job)['artifact']
             self.assertEqual(generated['name'],'Test01.png')
@@ -125,7 +127,8 @@ class FileTests(unittest.TestCase):
         stream=io.BytesIO()
         Image.new('RGBA',(16,16),(255,0,0,0)).save(stream,'PNG')
         job={'request':{'prompt':'将图片背景变为透明','mode':'image','files':[upload('input.png',stream.getvalue())]},
-             'key':'x','upstream':'http://unused','image_model':'gpt-image-2.5-flare'}
+             'key':'x','upstream':'http://unused','image_model':'gpt-image-2.5-flare',
+             'image_edit_base_url':'https://edit.example','image_edit_api_key':'provider-secret'}
         with patch.object(w,'request_model',return_value={'data':[{'b64_json':base64.b64encode(stream.getvalue()).decode()}]}) as call:
             result=w.process(job)
         self.assertEqual(call.call_args.args[1],'images/edits')
@@ -136,6 +139,15 @@ class FileTests(unittest.TestCase):
         with Image.open(io.BytesIO(base64.b64decode(result['artifact']['data']))) as saved:
             self.assertEqual(saved.mode,'RGBA')
             self.assertEqual(saved.getpixel((0,0))[3],0)
+
+    def test_image_edit_requires_separate_provider_configuration(self):
+        from PIL import Image
+        stream=io.BytesIO();Image.new('RGB',(4,4)).save(stream,'PNG')
+        job={'request':{'prompt':'修改图片背景','mode':'image','files':[upload('input.png',stream.getvalue())]},
+             'key':'one-api-token','upstream':'http://one-api:3000','image_model':'configured-model'}
+        with patch.object(w,'request_model') as call, self.assertRaisesRegex(ValueError,'尚未配置图片编辑渠道'):
+            w.process(job)
+        call.assert_not_called()
 
     def test_worker_exit_reports_safe_code(self):
         server=s.ThreadingHTTPServer(('127.0.0.1',0),s.Handler)
