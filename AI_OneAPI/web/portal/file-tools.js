@@ -29,13 +29,7 @@ window.fileTools = (() => {
     selected.push(...incoming);
     render();
   }
-  function clear() { selected.length = 0; $("uploads").value = ""; render(); }
-  $("attach-button").addEventListener("click", () => $("uploads").click());
-  $("uploads").addEventListener("change", event => {
-    try { add(event.target.files); $("status").textContent = ""; }
-    catch (error) { $("status").textContent = error.message; }
-    event.target.value = "";
-  });
+  function clear() { selected.length = 0; render(); }
   const composer = $("composer");
   let dragDepth = 0;
   composer.addEventListener("dragenter", event => { if (event.dataTransfer?.types?.includes("Files")) { event.preventDefault(); dragDepth++; composer.classList.add("drag-over"); } });
@@ -55,19 +49,20 @@ window.fileTools = (() => {
     }
   });
   function task(prompt = "") {
-    const mode = $("work-mode").value;
-    const format = $("output-format").value;
-    if (mode !== "document" || format !== "text") return {mode, format};
-    if (/(生成|制作|创建|绘制|画|编辑|修改).{0,120}(图片|图像|插画|海报)|(?:图片|图像).{0,20}(编辑|修改)/i.test(prompt)) return {mode:"image", format:"text"};
+    const imageAttached = selected.some(file => /\.(png|jpe?g|webp)$/i.test(file.name));
+    if (/(生成|制作|创建|绘制|画|编辑|修改).{0,120}(图片|图像|插画|海报)|(?:图片|图像).{0,20}(编辑|修改)/i.test(prompt) ||
+        (imageAttached && /透明|去背景|移除背景|抠图|修图|重绘|换背景/i.test(prompt))) return {mode:"image", format:"text"};
     const match = prompt.match(/(?:生成|制作|创建|导出|输出|转换为|保存为).{0,12}?(PDF|DOCX|XLSX|PPTX|CSV|JSON|TXT|MD|ZIP)(?:文件|文档|表格|幻灯片)?/i);
-    return {mode, format:match ? match[1].toLowerCase() : format};
+    const format = match ? match[1].toLowerCase() : "text";
+    const direct = selected.length === 1 && !imageAttached && format !== "text" && /(?:直接|不使用AI|不用AI|不调用模型).{0,20}(?:转换|转成|转为|导出)|(?:转换|转成|转为).{0,20}(?:不使用AI|不用AI|不调用模型)/i.test(prompt);
+    return {mode:direct ? "convert" : "document", format};
   }
   return {
     clear,
     names() { return selected.map(file => ({name:file.name})); },
-    direct() { return $("work-mode").value === "convert"; },
+    direct(prompt = "") { return task(prompt).mode === "convert"; },
     active(prompt = "") { const {mode,format} = task(prompt); return selected.length > 0 || mode !== "document" || format !== "text"; },
-    busy(value) { for (const id of ["uploads", "work-mode", "output-format", "attach-button"]) $(id).disabled = value; },
+    busy() {},
     async process({owner, tokenId, conversation, prompt, messages, model, signal}) {
       const {mode, format} = task(prompt);
       const files = [];

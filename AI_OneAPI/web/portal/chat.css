@@ -6,8 +6,3 @@
 .attachment-chip button{padding:0 4px;font-size:20px;line-height:1}
 .message-attachment{display:flex;width:fit-content;margin-top:8px;padding:8px 12px}
 .message-attachment a{color:#17634b;text-decoration:underline}
-#file-options{position:relative;font-size:12px;color:#575d57}
-#file-options summary{cursor:pointer;padding:7px}
-#file-options[open]{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
-#file-options select{max-width:170px;border:1px solid #ddd;border-radius:7px;padding:4px;background:white}
-@media(max-width:760px){.composer-actions{flex-wrap:wrap}#file-options[open]{flex-basis:100%}}

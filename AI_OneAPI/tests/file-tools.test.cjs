@@ -8,15 +8,14 @@ function setup(fetch){
  const nodes=new Map();
  const make=()=>({value:'',files:[],style:{},children:[],classList:{add(){},remove(){}},addEventListener(name,handler){this[name]=handler},setAttribute(){},replaceChildren(){this.children=[]},append(...x){this.children.push(...x)},click(){this.clickHandler?.()}});
  const get=id=>{if(!nodes.has(id))nodes.set(id,make());return nodes.get(id)};
- get('work-mode').value='document';get('output-format').value='text';
  const window={addEventListener(){}};
  vm.runInNewContext(source,{window,document:{getElementById:get,createElement:make},fetch,Uint8Array,btoa});
  return {get,api:window.fileTools};
 }
-test('uploads use cookie auth and token ID without credential storage',async()=>{
+test('dropped files use cookie auth and token ID without credential storage',async()=>{
  let sent;
  const p=setup(async(url,opts)=>{sent={url,opts};return {ok:true,json:async()=>({user_id:7,text:'完成'})}});
- p.get('uploads').change({target:{files:[{name:'a.txt',size:2,arrayBuffer:async()=>new Uint8Array([65,66]).buffer}],value:''}});
+ p.get('composer').drop({preventDefault(){},dataTransfer:{files:[{name:'a.txt',size:2,arrayBuffer:async()=>new Uint8Array([65,66]).buffer}]}});
  await p.api.process({owner:7,tokenId:'4',conversation:'conversation-id',prompt:'分析',messages:[],model:'gpt-5.6-sol'});
  assert.equal(sent.opts.credentials,'same-origin');assert.equal(sent.opts.headers.Authorization,undefined);
  assert.equal(JSON.parse(sent.opts.body).files[0].data,'QUI=');
@@ -24,7 +23,7 @@ test('uploads use cookie auth and token ID without credential storage',async()=>
 });
 test('rejects oversized files before fetch and mismatched owner after fetch',async()=>{
  let calls=0;const p=setup(async()=>{calls++;return {ok:true,json:async()=>({user_id:8,text:'secret'})}});
- p.get('uploads').change({target:{files:[{name:'big.txt',size:6*1024*1024}],value:''}});
+ p.get('composer').drop({preventDefault(){},dataTransfer:{files:[{name:'big.txt',size:6*1024*1024}]}});
  assert.match(p.get('status').textContent,/5 MiB/);assert.equal(calls,0);
  await assert.rejects(p.api.process({owner:7}),/账号/);
 });
@@ -48,4 +47,18 @@ test('explicit text instructions select image or document output',async()=>{
  assert.equal(p.api.active(detailed),true);
  await p.api.process({owner:7,tokenId:'4',conversation:'c',prompt:detailed,messages:[],model:'gpt-5.6-sol'});
  assert.equal(requests[2].mode,'image');
+});
+
+test('attached image edit and direct document conversion are inferred from instructions',async()=>{
+ const requests=[];
+ const p=setup(async(url,opts)=>{requests.push(JSON.parse(opts.body));return {ok:true,json:async()=>({user_id:7,text:'完成'})}});
+ const image={name:'Test01.png',size:2,arrayBuffer:async()=>new Uint8Array([1,2]).buffer};
+ p.get('composer').drop({preventDefault(){},dataTransfer:{files:[image]}});
+ await p.api.process({owner:7,tokenId:'4',conversation:'c',prompt:'将图片背景变为透明',messages:[],model:'gpt-5.6-sol'});
+ assert.equal(requests[0].mode,'image');
+ const doc={name:'source.docx',size:2,arrayBuffer:async()=>new Uint8Array([1,2]).buffer};
+ p.get('composer').drop({preventDefault(){},dataTransfer:{files:[doc]}});
+ assert.equal(p.api.direct('直接转换为 PDF 文件'),true);
+ await p.api.process({owner:7,tokenId:'',conversation:'c',prompt:'直接转换为 PDF 文件',messages:[],model:'gpt-5.6-sol'});
+ assert.equal(requests[1].mode,'convert');assert.equal(requests[1].format,'pdf');
 });

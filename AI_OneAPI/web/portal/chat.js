@@ -128,14 +128,14 @@ window.addEventListener("pagehide",()=>{controller?.abort();window.tokenPicker.c
 $("composer").addEventListener("submit",event=>{
   event.preventDefault();run(async()=>{
     const content=$("prompt").value.trim(),tokenId=$("token").value,model=$("model").value;
-    if(!content||(!tokenId && !window.fileTools?.direct?.()))throw new Error("请填写消息；AI 处理还需要在聊天设置中选择令牌。");
+    if(!content||(!tokenId && !window.fileTools?.direct?.(content)))throw new Error("请填写消息；AI 处理还需要在聊天设置中选择令牌。");
     await refresh();
     const stored=current?.messages || [];
     const before=stored.at(-1)?.role === "user" ? stored.slice(0,-1) : stored;
     const attachments=window.fileTools?.names?.() || [];
     const messages=[...before.map(({role,content,attachments})=>({role,content,attachments})),{role:"user",content,...(attachments.length?{attachments}:{})}];
     const payload=JSON.stringify({model,messages,max_completion_tokens:1024,stream:false});
-    if(!window.fileTools?.direct?.() && (messages.length>81 || new TextEncoder().encode(payload).length>120000))throw new Error("本次上下文过长，请新建对话；已有记录仍会保留。");
+    if(!window.fileTools?.direct?.(content) && (messages.length>81 || new TextEncoder().encode(payload).length>120000))throw new Error("本次上下文过长，请新建对话；已有记录仍会保留。");
     current ||= {title:content.slice(0,40),model,messages:[]};
     current.model=model;
     current.messages=messages;
