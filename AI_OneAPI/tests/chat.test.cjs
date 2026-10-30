@@ -43,15 +43,15 @@ test('stop preserves unanswered question and unlocks interface',async()=>{
  const p=await setup((url,opts)=>new Promise((resolve,reject)=>opts.signal.addEventListener('abort',()=>reject(Object.assign(new Error(),{name:'AbortError'})))));
  await p.send('question');p.node('stop').click();await tick();assert.equal(p.node('send').disabled,false);assert.equal(p.saved.get('1').messages.length,1);assert.match(p.node('status').textContent,/扣费/);
 });
-test('file processing saves only text and does not issue a duplicate model request',async()=>{
- let shown=false;
- const fileTools={busy(){},clearResult(){},clear(){},active:()=>true,async process(){return {text:'文件总结',artifact:{data:'BINARY_PRIVATE'}}},show(){shown=true}};
+test('file processing saves file metadata and does not issue a duplicate model request',async()=>{
+ const fileTools={busy(){},clear(){},names:()=>[{name:'source.txt'}],active:()=>true,async process(){return {text:'文件总结',artifact:{id:'a'.repeat(32),name:'result.pdf',expires:2000000000}}}};
  const p=await setup(()=>{throw new Error('duplicate paid request')},fileTools);
  await p.send('分析附件');
  assert.equal(p.saved.get('1').messages[1].content,'文件总结');
+ assert.equal(p.saved.get('1').messages[0].attachments[0].name,'source.txt');
+ assert.equal(p.saved.get('1').messages[1].attachments[0].name,'result.pdf');
  assert.ok(!JSON.stringify([...p.saved.values()]).includes('BINARY_PRIVATE'));
  assert.equal(p.calls.filter(call=>call.url==='/v1/chat/completions').length,0);
- assert.equal(shown,true);
 });
 test('direct conversion works without a model token',async()=>{
  const fileTools={busy(){},clearResult(){},clear(){},active:()=>true,direct:()=>true,async process(){return {text:'Converted locally'}},show(){}};

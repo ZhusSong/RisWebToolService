@@ -31,8 +31,13 @@ services:
     environment:
       ONE_API_URL: http://one-api:3000
       PUBLIC_ORIGIN: https://ai.ristoolweb.com
+      HISTORY_URL: http://history:3002
+      FILES_INTERNAL_SECRET: ${SESSION_SECRET:?Missing session secret}
+      ARTIFACT_DIR: /data/artifacts
       IMAGE_MODEL: ${IMAGE_MODEL:-}
       CONVERTER_ORIGIN: https://ristoolweb.com
+    volumes:
+      - artifact-data:/data
     read_only: true
     tmpfs:
       - /tmp:size=32m,mode=1777
@@ -55,6 +60,8 @@ services:
     environment:
       ONE_API_URL: http://one-api:3000
       PUBLIC_ORIGIN: https://ai.ristoolweb.com
+      FILES_URL: http://files:3003
+      FILES_INTERNAL_SECRET: ${SESSION_SECRET:?Missing session secret}
     volumes:
       - history-data:/data
     mem_limit: 128m
@@ -99,3 +106,4 @@ services:
       start_period: 30s
 volumes:
   history-data:
+  artifact-data:

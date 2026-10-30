@@ -6,6 +6,7 @@ import unittest
 import urllib.error
 import urllib.request
 from pathlib import Path
+from unittest.mock import patch
 
 spec = importlib.util.spec_from_file_location('history_server', Path(__file__).parents[1] / 'history/server.py')
 app = importlib.util.module_from_spec(spec)
@@ -60,7 +61,9 @@ class HistoryTests(unittest.TestCase):
         self.assertEqual(self.request('PUT',path,data)[0],200)
         self.assertEqual(self.request('PUT',path,data)[0],409)
         self.assertEqual(self.request('DELETE',path,{'revision':1})[0],409)
-        self.assertEqual(self.request('DELETE',path,{'revision':2})[0],200)
+        with patch.object(app,'remove_artifacts') as removed:
+            self.assertEqual(self.request('DELETE',path,{'revision':2})[0],200)
+            removed.assert_called_once_with(1,created['id'])
         self.assertEqual(self.request(path=path)[0],404)
 
     def test_auth_origin_and_changed_account(self):
@@ -76,6 +79,16 @@ class HistoryTests(unittest.TestCase):
         self.assertNotIn('secret',json.dumps(loaded))
         data['messages']=[{'role':'system','content':'not allowed'}]
         self.assertEqual(self.request('POST',data=data)[0],400)
+
+    def test_attachment_metadata_is_saved_without_bytes(self):
+        data={**self.sample(),'messages':[
+            {'role':'user','content':'分析','attachments':[{'name':'input.png','data':'PRIVATE_SOURCE'}]},
+            {'role':'assistant','content':'完成','attachments':[{'id':'a'*32,'name':'result.pdf','expires':2000000000,'data':'PRIVATE_RESULT'}]},
+        ]}
+        _,created=self.request('POST',data=data)
+        loaded=self.request(path='/'+created['id'])[1]
+        self.assertEqual(loaded['messages'][1]['attachments'][0]['name'],'result.pdf')
+        self.assertNotIn('PRIVATE_',json.dumps(loaded))
 
 if __name__ == '__main__':
     unittest.main()

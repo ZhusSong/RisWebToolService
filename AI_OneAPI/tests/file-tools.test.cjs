@@ -5,32 +5,43 @@ const vm=require('node:vm');
 const path=require('node:path');
 const source=fs.readFileSync(path.join(__dirname,'../web/portal/file-tools.js'),'utf8');
 function setup(fetch){
- const nodes=new Map(),revoked=[];
- const make=()=>({value:'',files:[],style:{},children:[],addEventListener(){},replaceChildren(){this.children=[]},append(...x){this.children.push(...x)}});
+ const nodes=new Map();
+ const make=()=>({value:'',files:[],style:{},children:[],classList:{add(){},remove(){}},addEventListener(name,handler){this[name]=handler},setAttribute(){},replaceChildren(){this.children=[]},append(...x){this.children.push(...x)},click(){this.clickHandler?.()}});
  const get=id=>{if(!nodes.has(id))nodes.set(id,make());return nodes.get(id)};
  get('work-mode').value='document';get('output-format').value='text';
  const window={addEventListener(){}};
- vm.runInNewContext(source,{window,document:{getElementById:get,createElement:make},fetch,Uint8Array,Blob,atob,btoa,URL:{createObjectURL:()=> 'blob:test',revokeObjectURL:url=>revoked.push(url)}});
- return {get,api:window.fileTools,revoked};
+ vm.runInNewContext(source,{window,document:{getElementById:get,createElement:make},fetch,Uint8Array,btoa});
+ return {get,api:window.fileTools};
 }
 test('uploads use cookie auth and token ID without credential storage',async()=>{
  let sent;
  const p=setup(async(url,opts)=>{sent={url,opts};return {ok:true,json:async()=>({user_id:7,text:'完成'})}});
- p.get('uploads').files=[{name:'a.txt',size:2,arrayBuffer:async()=>new Uint8Array([65,66]).buffer}];
- await p.api.process({owner:7,tokenId:'4',prompt:'分析',messages:[],model:'gpt-5.6-sol'});
+ p.get('uploads').change({target:{files:[{name:'a.txt',size:2,arrayBuffer:async()=>new Uint8Array([65,66]).buffer}],value:''}});
+ await p.api.process({owner:7,tokenId:'4',conversation:'conversation-id',prompt:'分析',messages:[],model:'gpt-5.6-sol'});
  assert.equal(sent.opts.credentials,'same-origin');assert.equal(sent.opts.headers.Authorization,undefined);
  assert.equal(JSON.parse(sent.opts.body).files[0].data,'QUI=');
+ assert.equal(JSON.parse(sent.opts.body).conversation,'conversation-id');
 });
 test('rejects oversized files before fetch and mismatched owner after fetch',async()=>{
  let calls=0;const p=setup(async()=>{calls++;return {ok:true,json:async()=>({user_id:8,text:'secret'})}});
- p.get('uploads').files=[{size:6*1024*1024}];
- await assert.rejects(p.api.process({owner:7}),/5 MiB/);assert.equal(calls,0);
- p.get('uploads').files=[];
+ p.get('uploads').change({target:{files:[{name:'big.txt',size:6*1024*1024}],value:''}});
+ assert.match(p.get('status').textContent,/5 MiB/);assert.equal(calls,0);
  await assert.rejects(p.api.process({owner:7}),/账号/);
 });
-test('download is local and clears generated binary references',()=>{
- const p=setup();p.api.show({mime:'image/png',name:'result.png',data:'QUI='});
- assert.equal(p.get('file-result').children.length,2);
- assert.equal(p.get('file-result').children[1].download,'result.png');
- p.api.clear();assert.deepEqual(p.revoked,['blob:test']);assert.equal(p.get('file-result').children.length,0);
+test('dragging files adds removable attachment chips',()=>{
+ const p=setup();
+ p.get('composer').drop({preventDefault(){},dataTransfer:{files:[{name:'picture.png',size:10}]}});
+ assert.equal(p.api.names()[0].name,'picture.png');
+ p.get('attachment-list').children[0].children[0].click();
+ assert.equal(p.api.names().length,0);
+});
+test('explicit text instructions select image or document output',async()=>{
+ const requests=[];
+ const p=setup(async(url,opts)=>{requests.push(JSON.parse(opts.body));return {ok:true,json:async()=>({user_id:7,text:'完成'})}});
+ assert.equal(p.api.active('生成一张图片'),true);
+ await p.api.process({owner:7,tokenId:'4',conversation:'c',prompt:'生成一张图片',messages:[],model:'gpt-5.6-sol'});
+ assert.equal(requests[0].mode,'image');
+ await p.api.process({owner:7,tokenId:'4',conversation:'c',prompt:'生成一份 PDF 文件',messages:[],model:'gpt-5.6-sol'});
+ assert.equal(requests[1].format,'pdf');
+ assert.equal(p.api.active('分析这份 PDF'),false);
 });

@@ -1,13 +1,17 @@
-"""Ephemeral file jobs: cookie auth, owner-scoped token lookup, one bounded worker."""
+"""Account-scoped file jobs and 24-hour generated artifact downloads."""
+import hmac
 import json
 import os
+import re
 import subprocess
 import sys
 import threading
 import time
 import urllib.request
+import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+import artifact_store
 
 ORIGIN = os.getenv('PUBLIC_ORIGIN', 'https://ai.ristoolweb.com')
 UPSTREAM = os.getenv('ONE_API_URL', 'http://one-api:3000').rstrip('/')
@@ -15,6 +19,20 @@ IMAGE_MODEL = os.getenv('IMAGE_MODEL', '').strip()
 CONVERTER_ORIGIN = os.getenv('CONVERTER_ORIGIN', '').strip()
 SLOT = threading.BoundedSemaphore(1)
 MAX_BODY = 12 * 1024 * 1024
+HISTORY_URL = os.getenv('HISTORY_URL', 'http://history:3002')
+INTERNAL_SECRET = os.getenv('FILES_INTERNAL_SECRET', '')
+CONVERSATION_ID = re.compile(r'^[0-9a-f-]{36}$')
+
+
+def verify_conversation(conversation, cookie, owner):
+    if not isinstance(conversation, str) or not CONVERSATION_ID.fullmatch(conversation):
+        raise ValueError('会话无效')
+    request = urllib.request.Request(HISTORY_URL + '/history-api/conversations/' + conversation,
+                                     headers={'Cookie': cookie, 'X-History-User': str(owner)})
+    with urllib.request.urlopen(request, timeout=8) as response:
+        data = json.load(response)
+    if data.get('user_id') != owner:
+        raise ValueError('会话归属无效')
 
 def account_get(path, cookie):
     request = urllib.request.Request(UPSTREAM + path, headers={'Cookie': cookie})
@@ -69,6 +87,34 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == '/health':
             return self.reply(200, {'ok': True})
+        if self.path.startswith('/files-api/artifacts/'):
+            parsed = urllib.parse.urlsplit(self.path)
+            identifier = parsed.path.removeprefix('/files-api/artifacts/')
+            conversation = urllib.parse.parse_qs(parsed.query).get('conversation', [''])[0]
+            try:
+                cookie = self.headers.get('Cookie', '')
+                user = account_get('/api/user/self', cookie)
+                owner = user.get('id')
+                if type(owner) is not int or owner <= 0:
+                    raise ValueError()
+                verify_conversation(conversation, cookie, owner)
+                found = artifact_store.lookup(identifier, owner, conversation)
+                if not found:
+                    return self.reply(404, {'error': '文件不存在或已过期'})
+                (name, mime, size, expires), path = found
+                raw = path.read_bytes()
+                if len(raw) != size or int(time.time()) >= expires:
+                    return self.reply(404, {'error': '文件不可用'})
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/octet-stream')
+                self.send_header('Content-Disposition', "attachment; filename*=UTF-8''" + urllib.parse.quote(name, safe=''))
+                self.send_header('Cache-Control', 'no-store')
+                self.send_header('X-Content-Type-Options', 'nosniff')
+                self.send_header('Content-Length', str(size))
+                self.end_headers()
+                return self.wfile.write(raw)
+            except Exception:
+                return self.reply(404, {'error': '文件不存在或已过期'})
         if self.path != '/files-api/config':
             return self.reply(404, {'error': '地址不存在'})
         try:
@@ -78,6 +124,20 @@ class Handler(BaseHTTPRequestHandler):
             self.reply(401, {'error': '请重新登录'})
 
     def do_POST(self):
+        if self.path == '/files-api/internal/delete':
+            if not INTERNAL_SECRET or not hmac.compare_digest(self.headers.get('X-Internal-Secret', ''), INTERNAL_SECRET):
+                return self.reply(404, {'error': '地址不存在'})
+            try:
+                size = int(self.headers.get('Content-Length', '0'))
+                if not 0 < size < 1000:
+                    raise ValueError()
+                data = json.loads(self.rfile.read(size))
+                if type(data.get('owner')) is not int or not CONVERSATION_ID.fullmatch(data.get('conversation', '')):
+                    raise ValueError()
+                artifact_store.delete_conversation(data['owner'], data['conversation'])
+                return self.reply(200, {'ok': True})
+            except Exception:
+                return self.reply(400, {'error': '请求无效'})
         public = self.path == '/convert-api/process' and bool(CONVERTER_ORIGIN)
         if self.path != '/files-api/process' and not public:
             return self.reply(404, {'error': '地址不存在'})
@@ -105,6 +165,7 @@ class Handler(BaseHTTPRequestHandler):
                     owner, key = None, None
                 else:
                     owner, key = authorize(cookie, expected, None if data.get('mode') == 'convert' else data.get('token_id', ''))
+                    verify_conversation(data.get('conversation'), cookie, owner)
             except Exception:
                 return self.reply(403, {'error': '登录状态或所选令牌不可用，请刷新令牌'})
             # Pass secrets via a pipe, never argv, environment, disk, logs or response.
@@ -114,6 +175,12 @@ class Handler(BaseHTTPRequestHandler):
                                     stderr=subprocess.DEVNULL, timeout=55 if public else 220, check=True)
             output = json.loads(result.stdout)
             if not public:
+                if 'artifact' in output:
+                    try:
+                        output['artifact'] = artifact_store.save(owner, data['conversation'], output['artifact'])
+                    except Exception:
+                        output.pop('artifact', None)
+                        output['warning'] = (output.get('warning', '') + ' 文件保存失败，文字回答仍可使用。').strip()
                 output['user_id'] = owner
             self.reply(400 if 'error' in output else 200, output)
         except subprocess.TimeoutExpired:
@@ -128,4 +195,12 @@ class Handler(BaseHTTPRequestHandler):
             SLOT.release()
 
 if __name__ == '__main__':
+    def clean_forever():
+        while True:
+            try:
+                artifact_store.cleanup()
+            except Exception:
+                pass
+            time.sleep(60)
+    threading.Thread(target=clean_forever, daemon=True).start()
     ThreadingHTTPServer(('0.0.0.0', 3003), Handler).serve_forever()

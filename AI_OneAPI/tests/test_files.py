@@ -9,6 +9,10 @@ import urllib.request
 import urllib.error
 from unittest.mock import patch
 import zipfile
+import tempfile
+import sys
+sys.path.insert(0, str(Path(__file__).parents[1] / 'files'))
+import artifact_store as store
 
 ROOT = Path(__file__).parents[1] / 'files'
 def load(name):
@@ -143,7 +147,7 @@ class FileTests(unittest.TestCase):
         thread = threading.Thread(target=server.serve_forever,daemon=True);thread.start()
         def send(origin=s.ORIGIN, cookie='valid'):
             req=urllib.request.Request(f'http://127.0.0.1:{server.server_port}/files-api/process',
-                data=json.dumps({'token_id':'4','prompt':'hello'}).encode(),
+                data=json.dumps({'token_id':'4','prompt':'hello','conversation':'00000000-0000-0000-0000-000000000001'}).encode(),
                 headers={'Origin':origin,'Cookie':cookie,'X-History-User':'1'})
             try:
                 response=urllib.request.urlopen(req)
@@ -152,7 +156,7 @@ class FileTests(unittest.TestCase):
             with response:
                 return response.status,json.load(response)
         try:
-            with patch.object(s,'authorize',return_value=(1,'SECRET')), patch.object(s.subprocess,'run') as run:
+            with patch.object(s,'authorize',return_value=(1,'SECRET')), patch.object(s,'verify_conversation'), patch.object(s.subprocess,'run') as run:
                 self.assertEqual(send('https://evil.example')[0],403)
                 run.assert_not_called()
                 run.return_value.stdout=b'{"text":"done"}'
@@ -171,6 +175,48 @@ class FileTests(unittest.TestCase):
         token['expired_time']=1
         with patch.object(s,'account_get',side_effect=[{'id':1},token]), self.assertRaises(ValueError):
             s.authorize('session','1',4)
+
+    def test_download_requires_owner_conversation_and_unexpired_file(self):
+        with tempfile.TemporaryDirectory() as folder, patch.object(store,'ROOT',Path(folder)):
+            item=store.save(1,'00000000-0000-0000-0000-000000000001',{'name':'报告.pdf','mime':'application/pdf','data':base64.b64encode(b'example').decode()})
+            server=s.ThreadingHTTPServer(('127.0.0.1',0),s.Handler)
+            thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+            url=f'http://127.0.0.1:{server.server_port}/files-api/artifacts/{item["id"]}?conversation=00000000-0000-0000-0000-000000000001'
+            try:
+                with patch.object(s,'account_get',return_value={'id':1}),patch.object(s,'verify_conversation'):
+                    with urllib.request.urlopen(urllib.request.Request(url,headers={'Cookie':'session'})) as response:
+                        self.assertEqual(response.read(),b'example')
+                        self.assertIn('attachment;',response.headers['Content-Disposition'])
+                with patch.object(s,'account_get',return_value={'id':2}),patch.object(s,'verify_conversation'):
+                    with self.assertRaises(urllib.error.HTTPError) as error:
+                        urllib.request.urlopen(urllib.request.Request(url,headers={'Cookie':'session'}))
+                    self.assertEqual(error.exception.code,404);error.exception.close()
+                with patch.object(store.time,'time',return_value=item['expires']):
+                    with patch.object(s,'account_get',return_value={'id':1}),patch.object(s,'verify_conversation'):
+                        with self.assertRaises(urllib.error.HTTPError) as error:
+                            urllib.request.urlopen(urllib.request.Request(url,headers={'Cookie':'session'}))
+                        self.assertEqual(error.exception.code,404);error.exception.close()
+            finally:
+                server.shutdown();server.server_close();thread.join()
+
+    def test_processed_artifact_returns_metadata_instead_of_bytes(self):
+        with tempfile.TemporaryDirectory() as folder, patch.object(store,'ROOT',Path(folder)):
+            server=s.ThreadingHTTPServer(('127.0.0.1',0),s.Handler)
+            thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+            try:
+                artifact={'name':'result.txt','mime':'text/plain','data':base64.b64encode(b'PRIVATE_RESULT').decode()}
+                with patch.object(s,'authorize',return_value=(1,'SECRET')),patch.object(s,'verify_conversation'),patch.object(s.subprocess,'run') as run:
+                    run.return_value.stdout=json.dumps({'text':'完成','artifact':artifact}).encode()
+                    req=urllib.request.Request(f'http://127.0.0.1:{server.server_port}/files-api/process',
+                        data=json.dumps({'conversation':'00000000-0000-0000-0000-000000000001','token_id':'4','prompt':'输出'}).encode(),
+                        headers={'Origin':s.ORIGIN,'Cookie':'session','X-History-User':'1'})
+                    with urllib.request.urlopen(req) as response:
+                        result=json.load(response)
+                self.assertEqual(result['artifact']['name'],'result.txt')
+                self.assertNotIn('data',result['artifact'])
+                self.assertEqual((Path(folder)/result['artifact']['id']).read_bytes(),b'PRIVATE_RESULT')
+            finally:
+                server.shutdown();server.server_close();thread.join()
 
 if __name__ == '__main__':
     unittest.main()

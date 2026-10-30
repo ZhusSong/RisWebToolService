@@ -5,6 +5,7 @@ import sqlite3
 import time
 import uuid
 import urllib.request
+import re
 from contextlib import closing
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -13,6 +14,19 @@ DB = os.environ.get('HISTORY_DB', '/data/history.db')
 UPSTREAM = os.environ.get('ONE_API_URL', 'http://one-api:3000')
 ORIGIN = os.environ.get('PUBLIC_ORIGIN', 'https://ai.ristoolweb.com')
 MODELS = {'gpt-5.6-sol', 'gpt-6-astra'}
+FILES_URL = os.environ.get('FILES_URL', 'http://files:3003')
+INTERNAL_SECRET = os.environ.get('FILES_INTERNAL_SECRET', '')
+ARTIFACT_ID = re.compile(r'^[0-9a-f]{32}$')
+
+
+def remove_artifacts(owner, conversation):
+    if not INTERNAL_SECRET:
+        return
+    body = json.dumps({'owner': owner, 'conversation': conversation}).encode()
+    request = urllib.request.Request(FILES_URL + '/files-api/internal/delete', data=body,
+                                     headers={'Content-Type': 'application/json', 'X-Internal-Secret': INTERNAL_SECRET})
+    with urllib.request.urlopen(request, timeout=8):
+        pass
 
 def init_db():
     Path(DB).parent.mkdir(parents=True, exist_ok=True)
@@ -49,6 +63,26 @@ def validate(data):
         item = {'role': message['role'], 'content': content}
         if message.get('model') in MODELS:
             item['model'] = message['model']
+        attachments = message.get('attachments', [])
+        if not isinstance(attachments, list) or len(attachments) > 4:
+            raise ValueError('附件无效')
+        clean_attachments = []
+        for attachment in attachments:
+            if not isinstance(attachment, dict) or not isinstance(attachment.get('name'), str) or not 1 <= len(attachment['name']) <= 200:
+                raise ValueError('附件名称无效')
+            name = attachment['name']
+            if '/' in name or '\\' in name or any(ord(c) < 32 for c in name):
+                raise ValueError('附件名称无效')
+            if message['role'] == 'assistant':
+                if not isinstance(attachment.get('id'), str) or not ARTIFACT_ID.fullmatch(attachment['id']):
+                    raise ValueError('文件引用无效')
+                if type(attachment.get('expires')) is not int or attachment['expires'] <= 0:
+                    raise ValueError('文件期限无效')
+                clean_attachments.append({'id': attachment['id'], 'name': name, 'expires': attachment['expires']})
+            else:
+                clean_attachments.append({'name': name})
+        if clean_attachments:
+            item['attachments'] = clean_attachments
         clean.append(item)
     return title.strip(), model, json.dumps(clean, ensure_ascii=False)
 
@@ -144,6 +178,11 @@ class Handler(BaseHTTPRequestHandler):
                 if not cursor.rowcount:
                     return self.reply(409, {'error': '会话已在另一页面更新，请刷新后重试。'})
                 db.commit()
+                if self.command == 'DELETE':
+                    try:
+                        remove_artifacts(owner, cid)
+                    except Exception:
+                        pass  # Retention worker still removes files within 24 hours.
                 return self.reply(200, {'id': cid, 'revision': data['revision'] + 1, 'user_id': owner})
         except ValueError:
             self.reply(400, {'error': '请求内容无效或超出保存限制。'})
