@@ -44,4 +44,8 @@ test('explicit text instructions select image or document output',async()=>{
  await p.api.process({owner:7,tokenId:'4',conversation:'c',prompt:'生成一份 PDF 文件',messages:[],model:'gpt-5.6-sol'});
  assert.equal(requests[1].format,'pdf');
  assert.equal(p.api.active('分析这份 PDF'),false);
+ const detailed='生成一张木质破旧十字架的像素图片，像素大小为128*128像素，命名为Test01';
+ assert.equal(p.api.active(detailed),true);
+ await p.api.process({owner:7,tokenId:'4',conversation:'c',prompt:detailed,messages:[],model:'gpt-5.6-sol'});
+ assert.equal(requests[2].mode,'image');
 });

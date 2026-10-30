@@ -111,6 +111,11 @@ class FileTests(unittest.TestCase):
         with patch.object(w,'request_model',return_value={'data':[{'b64_json':base64.b64encode(stream.getvalue()).decode()}]}) as call:
             self.assertEqual(w.process(job)['artifact']['mime'],'image/png')
             self.assertEqual(call.call_args.args[1],'images/edits')
+            job['request']['prompt']='生成一张木质破旧十字架的像素图片，像素大小为128*128像素，命名为Test01'
+            generated=w.process(job)['artifact']
+            self.assertEqual(generated['name'],'Test01.png')
+            with Image.open(io.BytesIO(base64.b64decode(generated['data']))) as image:
+                self.assertEqual(image.size,(128,128))
         with patch.object(w,'request_model',return_value={'data':[{'url':'http://127.0.0.1/private'}]}), self.assertRaises(ValueError):
             w.process(job)  # Never fetch provider-supplied URLs.
 

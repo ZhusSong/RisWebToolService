@@ -4,6 +4,7 @@ import csv
 import io
 import json
 import os
+import re
 from pathlib import PurePosixPath
 import stat
 import sys
@@ -55,6 +56,24 @@ def image_png(raw):
             output = io.BytesIO()
             image.save(output, 'PNG')
             return output.getvalue()
+
+def generated_image(raw, prompt):
+    """Resize a generated PNG when dimensions were explicitly requested."""
+    from PIL import Image
+    size = re.search(r'(?<!\d)(\d{2,4})\s*[xX×*＊]\s*(\d{2,4})(?:\s*像素)?', prompt)
+    name = re.search(r'命名为\s*([\w\u4e00-\u9fff -]{1,80})', prompt)
+    filename = (name.group(1).strip().removesuffix('.png') if name else 'RISTOOL-image')
+    filename = filename.rstrip('. ') or 'RISTOOL-image'
+    if size:
+        width, height = int(size.group(1)), int(size.group(2))
+        if not (64 <= width <= 2048 and 64 <= height <= 2048 and width * height <= 4_000_000):
+            raise ValueError('图片尺寸需在 64 至 2048 像素以内')
+        with Image.open(io.BytesIO(raw)) as image:
+            image = image.resize((width, height), Image.Resampling.NEAREST if '像素' in prompt else Image.Resampling.LANCZOS)
+            output = io.BytesIO()
+            image.save(output, 'PNG')
+            raw = output.getvalue()
+    return filename + '.png', raw
 
 def extract(name, raw):
     suffix = PurePosixPath(name).suffix.lower()
@@ -293,8 +312,9 @@ def process(job):
             raise ValueError('渠道未返回 Base64 图片；请配置兼容 GPT Image 的渠道。本次可能已扣费')
         raw = base64.b64decode(encoded, validate=True)
         png = image_png(raw)
-        return {'text': '图片已生成，请下载保存。图片不会随历史记录保留。',
-                'artifact': {'name': 'RISTOOL-image.png', 'mime': 'image/png', 'data': base64.b64encode(png).decode()},
+        filename, png = generated_image(png, prompt)
+        return {'text': '图片已生成，可在 24 小时内下载保存。',
+                'artifact': {'name': filename, 'mime': 'image/png', 'data': base64.b64encode(png).decode()},
                 'model': job['image_model']}
     model = data.get('model')
     if model not in {'gpt-5.6-sol', 'gpt-6-astra'}:

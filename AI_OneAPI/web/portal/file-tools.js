@@ -58,7 +58,7 @@ window.fileTools = (() => {
     const mode = $("work-mode").value;
     const format = $("output-format").value;
     if (mode !== "document" || format !== "text") return {mode, format};
-    if (/(生成|制作|创建|绘制|画|编辑|修改).{0,12}(图片|图像|插画|海报)|(?:图片|图像).{0,8}(编辑|修改)/i.test(prompt)) return {mode:"image", format:"text"};
+    if (/(生成|制作|创建|绘制|画|编辑|修改).{0,120}(图片|图像|插画|海报)|(?:图片|图像).{0,20}(编辑|修改)/i.test(prompt)) return {mode:"image", format:"text"};
     const match = prompt.match(/(?:生成|制作|创建|导出|输出|转换为|保存为).{0,12}?(PDF|DOCX|XLSX|PPTX|CSV|JSON|TXT|MD|ZIP)(?:文件|文档|表格|幻灯片)?/i);
     return {mode, format:match ? match[1].toLowerCase() : format};
   }
