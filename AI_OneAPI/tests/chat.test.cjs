@@ -5,7 +5,7 @@ const fs=require('node:fs');
 const path=require('node:path');
 const source=fs.readFileSync(path.join(__dirname,'../web/portal/chat.js'),'utf8');
 const tick=()=>new Promise(resolve=>setImmediate(resolve));
-async function setup(modelFetch, fileTools){
+async function setup(modelFetch, fileTools, availableModels){
  const nodes=new Map(),calls=[],saved=new Map();let id=0;
  const make=()=>({value:'',children:[],addEventListener(n,fn){this[n]=fn},setAttribute(){},replaceChildren(...x){this.children=x},append(...x){this.children.push(...x)},focus(){}});
  const node=id=>{if(!nodes.has(id))nodes.set(id,make());return nodes.get(id)};
@@ -21,7 +21,9 @@ async function setup(modelFetch, fileTools){
   return {ok:true,json:async()=>({...result,user_id:1})};
  };
  node('token').value='token-id';node('model').value='gpt-5.6-sol';
- const context=vm.createContext({document:{getElementById:node,querySelectorAll:()=>[],createElement:make,body:{classList:{add(){},toggle(){return false}}}},window:{fileTools,tokenPicker:{preselect(){},load(){},setBusy(){},clear(){},async resolve(){return 'test-key'}},location:{hash:''},matchMedia:()=>({matches:false}),addEventListener(){},confirm:()=>true,prompt:()=>null},fetch,AbortController,AbortSignal,TextEncoder,setTimeout,clearTimeout});
+ const tokenPicker={preselect(){},load(){this.selection?.('token-id')},setBusy(){},clear(){},async resolve(){return 'test-key'},onSelection(fn){this.selection=fn}};
+ if(availableModels)tokenPicker.models=async()=>availableModels;
+ const context=vm.createContext({document:{getElementById:node,querySelectorAll:()=>[],createElement:make,body:{classList:{add(){},toggle(){return false}}}},window:{fileTools,tokenPicker,location:{hash:''},matchMedia:()=>({matches:false}),addEventListener(){},confirm:()=>true,prompt:()=>null},fetch,AbortController,AbortSignal,TextEncoder,setTimeout,clearTimeout});
  vm.runInContext(source,context);await tick();
  return {node,calls,saved,send:async text=>{node('prompt').value=text;node('composer').submit({preventDefault(){}});await tick();await tick();}};
 }
@@ -60,4 +62,10 @@ test('direct conversion works without a model token',async()=>{
  await p.send('Convert this file');
  assert.equal(p.saved.get('1').messages[1].content,'Converted locally');
  assert.equal(p.calls.filter(call=>call.url==='/v1/chat/completions').length,0);
+});
+test('chat model choices follow the selected token and support another text model',async()=>{
+ const p=await setup(async()=>({ok:true,json:async()=>({choices:[{message:{content:'ok'}}]})}),null,['gpt-4','gpt-5.6-sol','gpt-image-2.5-flare']);
+ assert.deepEqual(p.node('model').children.map(option=>option.value),['gpt-4','gpt-5.6-sol','gpt-image-2.5-flare']);
+ p.node('model').value='gpt-4';await p.send('你好');
+ assert.equal(JSON.parse(p.calls.find(call=>call.url==='/v1/chat/completions').opts.body).model,'gpt-4');
 });

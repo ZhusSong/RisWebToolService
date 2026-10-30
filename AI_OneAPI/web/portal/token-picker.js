@@ -4,6 +4,7 @@ window.tokenPicker = (() => {
   const refresh = document.getElementById("refresh-tokens"), more = document.getElementById("more-tokens");
   let page = 0, ended = false, loading = false, busy = false, preferred = "", generation = 0;
   const ids = new Set();
+  let onSelection = () => {};
   const keyOf = token => typeof token.key === "string" ? (token.key.startsWith("sk-") ? token.key : `sk-${token.key}`) : "";
   function reason(token) {
     if (token.status !== 1) return "不可用";
@@ -46,14 +47,16 @@ window.tokenPicker = (() => {
       }
       ended = rows.length === 0 || added === 0; page++;
       status.textContent = ids.size ? (preferred ? "尚未找到所选令牌，可加载更多或另选令牌。" : `已加载 ${ids.size} 条令牌；未找到时点击加载更多。`) : "暂无令牌，请先在管理我的令牌中创建。";
+      onSelection(select.value);
     } catch { if (version === generation) { reset(); ended = true; preferred = ""; status.textContent = "无法读取令牌。请确认已登录后台，然后点击刷新令牌。"; } }
     finally {clearTimeout(timer); loading = false; controls();}
   }
-  select.addEventListener("change",()=>{preferred = "";});
+  select.addEventListener("change",()=>{preferred = "";onSelection(select.value);});
   refresh.addEventListener("click",()=>load(true)); more.addEventListener("click",()=>load());
   return {
     load,
     preselect(key) {preferred = key;},
+    onSelection(callback) {onSelection = callback;},
     setBusy(value) {busy = value; controls();},
     clear() {generation++; preferred = ""; reset();},
     async resolve(id, signal) {
@@ -62,6 +65,15 @@ window.tokenPicker = (() => {
       const token = await get(`/api/token/${encodeURIComponent(id)}`, signal);
       if (!token || String(token.id) !== id || reason(token) || !keyOf(token)) throw new Error("所选令牌不可用，请刷新列表检查状态与额度。");
       return keyOf(token);
+    },
+    async models(id, signal) {
+      const key = await this.resolve(id, signal);
+      const response = await fetch('/v1/models', {credentials:'omit',cache:'no-store',redirect:'error',signal,
+        headers:{Authorization:`Bearer ${key}`}});
+      if (!response.ok) throw new Error('无法读取此令牌可用的模型，请检查令牌权限。');
+      const body = await response.json();
+      if (!Array.isArray(body.data)) throw new Error('模型列表格式异常。');
+      return [...new Set(body.data.map(item=>item?.id).filter(id=>typeof id === 'string' && /^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$/.test(id)))].sort();
     }
   };
 })();

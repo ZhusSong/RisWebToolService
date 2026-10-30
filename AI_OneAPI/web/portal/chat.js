@@ -2,7 +2,22 @@
 const $ = id => document.getElementById(id);
 const base = "/history-api/conversations";
 let current = null, items = [], owner = null, controller = null, locked = false, unsaved = false;
+let modelRequest = 0;
 function status(message) { $("status").textContent = message; }
+async function refreshModels(tokenId) {
+  const version = ++modelRequest;
+  if (!tokenId || !window.tokenPicker.models) return;
+  try {
+    const models = await window.tokenPicker.models(tokenId, AbortSignal.timeout(20000));
+    if (version !== modelRequest || $("token").value !== tokenId) return;
+    if (!models.length) throw new Error("此令牌没有可用模型，请检查渠道和令牌设置。");
+    const preferred = current?.model || $("model").value;
+    const options = models.map(id => {const option=document.createElement("option");option.value=id;option.textContent=id;return option;});
+    $("model").replaceChildren(...options);
+    $("model").value = models.includes(preferred) ? preferred : models[0];
+  } catch(error) { if (version === modelRequest) status(error.message); }
+}
+window.tokenPicker.onSelection?.(refreshModels);
 function lock(value) {
   locked = value;
   for (const id of ["send","clear","model","prompt","rename","delete-chat","reload-history","retry-save"]) $(id).disabled = value;
@@ -128,7 +143,7 @@ window.addEventListener("pagehide",()=>{controller?.abort();window.tokenPicker.c
 $("composer").addEventListener("submit",event=>{
   event.preventDefault();run(async()=>{
     const content=$("prompt").value.trim(),tokenId=$("token").value,model=$("model").value;
-    if(!content||(!tokenId && !window.fileTools?.direct?.(content)))throw new Error("请填写消息；AI 处理还需要在聊天设置中选择令牌。");
+    if(!content||!model||(!tokenId && !window.fileTools?.direct?.(content)))throw new Error("请填写消息并选择可用模型；AI 处理还需要在聊天设置中选择令牌。");
     await refresh();
     const stored=current?.messages || [];
     const before=stored.at(-1)?.role === "user" ? stored.slice(0,-1) : stored;
@@ -146,7 +161,7 @@ $("composer").addEventListener("submit",event=>{
     controller=new AbortController();const timer=setTimeout(()=>controller.abort(),180000);$("stop").disabled=false;
     status("正在生成回答…");
     try {
-      if (window.fileTools?.active(content)) {
+      if (window.fileTools?.active(content,model)) {
         clearTimeout(timer);
         const fileTimer = setTimeout(()=>controller.abort(),240000);
         try {

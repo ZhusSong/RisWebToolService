@@ -15,3 +15,14 @@ test('rechecks ownership before send and fails closed when session changes',asyn
 test('unauthenticated list clears selection and disables pagination',async()=>{
  const p=setup(async()=>({ok:false,status:401}));await p.picker.load(true);assert.equal(p.node('token').value,'');assert.equal(p.node('more-tokens').disabled,true);assert.match(p.node('token-status').textContent,/登录/);
 });
+test('models are read with the selected token and never stored in option text',async()=>{
+ const calls=[];const p=setup(async(url,opts)=>{calls.push({url,opts});
+  if(url==='/v1/models')return {ok:true,json:async()=>({data:[{id:'gpt-4'},{id:'gpt-5.6-sol'},{id:'gpt-image-2.5-flare'},{id:'bad model'}]})};
+  return {ok:true,json:async()=>({success:true,data:url.includes('?')?[token(1)]:token(1)})};
+ });
+ await p.picker.load(true);
+ const models=await p.picker.models('1');
+ assert.deepEqual(Array.from(models),['gpt-4','gpt-5.6-sol','gpt-image-2.5-flare']);
+ assert.equal(calls.at(-1).opts.credentials,'omit');
+ assert.equal(calls.at(-1).opts.headers.Authorization,'Bearer sk-example1234561');
+});

@@ -48,9 +48,9 @@ window.fileTools = (() => {
       catch (error) { $("status").textContent = error.message; }
     }
   });
-  function task(prompt = "") {
+  function task(prompt = "", model = "") {
     const imageAttached = selected.some(file => /\.(png|jpe?g|webp)$/i.test(file.name));
-    if (/(生成|制作|创建|绘制|画|编辑|修改).{0,120}(图片|图像|插画|海报)|(?:图片|图像).{0,20}(编辑|修改)/i.test(prompt) ||
+    if (/^gpt-image-/i.test(model) || /(生成|制作|创建|绘制|画|编辑|修改).{0,120}(图片|图像|插画|海报)|(?:图片|图像).{0,20}(编辑|修改)/i.test(prompt) ||
         (imageAttached && /透明|去背景|移除背景|抠图|修图|重绘|换背景/i.test(prompt))) return {mode:"image", format:"text"};
     const match = prompt.match(/(?:生成|制作|创建|导出|输出|转换为|保存为).{0,12}?(PDF|DOCX|XLSX|PPTX|CSV|JSON|TXT|MD|ZIP)(?:文件|文档|表格|幻灯片)?/i);
     const format = match ? match[1].toLowerCase() : "text";
@@ -61,10 +61,10 @@ window.fileTools = (() => {
     clear,
     names() { return selected.map(file => ({name:file.name})); },
     direct(prompt = "") { return task(prompt).mode === "convert"; },
-    active(prompt = "") { const {mode,format} = task(prompt); return selected.length > 0 || mode !== "document" || format !== "text"; },
+    active(prompt = "", model = "") { const {mode,format} = task(prompt, model); return selected.length > 0 || mode !== "document" || format !== "text"; },
     busy() {},
     async process({owner, tokenId, conversation, prompt, messages, model, signal}) {
-      const {mode, format} = task(prompt);
+      const {mode, format} = task(prompt, model);
       const files = [];
       for (const file of selected) {
         const bytes = new Uint8Array(await file.arrayBuffer());

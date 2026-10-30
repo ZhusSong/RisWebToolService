@@ -80,6 +80,16 @@ class HistoryTests(unittest.TestCase):
         data['messages']=[{'role':'system','content':'not allowed'}]
         self.assertEqual(self.request('POST',data=data)[0],400)
 
+    def test_additional_token_model_can_be_saved(self):
+        data={**self.sample(),'model':'gpt-4','messages':[{'role':'assistant','content':'完成','model':'gpt-4'}]}
+        status,created=self.request('POST',data=data)
+        self.assertEqual(status,201)
+        loaded=self.request(path='/'+created['id'])[1]
+        self.assertEqual(loaded['model'],'gpt-4')
+        self.assertEqual(loaded['messages'][0]['model'],'gpt-4')
+        for invalid in ('', 'bad model', '../model', 'a'*101):
+            self.assertEqual(self.request('POST',data={**data,'model':invalid})[0],400)
+
     def test_attachment_metadata_is_saved_without_bytes(self):
         data={**self.sample(),'messages':[
             {'role':'user','content':'分析','attachments':[{'name':'input.png','data':'PRIVATE_SOURCE'}]},

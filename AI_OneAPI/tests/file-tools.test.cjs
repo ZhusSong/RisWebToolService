@@ -47,6 +47,9 @@ test('explicit text instructions select image or document output',async()=>{
  assert.equal(p.api.active(detailed),true);
  await p.api.process({owner:7,tokenId:'4',conversation:'c',prompt:detailed,messages:[],model:'gpt-5.6-sol'});
  assert.equal(requests[2].mode,'image');
+ assert.equal(p.api.active('继续', 'gpt-image-2.5-flare'),true);
+ await p.api.process({owner:7,tokenId:'4',conversation:'c',prompt:'继续',messages:[],model:'gpt-image-2.5-flare'});
+ assert.equal(requests[3].mode,'image');
 });
 
 test('attached image edit and direct document conversion are inferred from instructions',async()=>{

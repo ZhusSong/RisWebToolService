@@ -13,7 +13,11 @@ from pathlib import Path
 DB = os.environ.get('HISTORY_DB', '/data/history.db')
 UPSTREAM = os.environ.get('ONE_API_URL', 'http://one-api:3000')
 ORIGIN = os.environ.get('PUBLIC_ORIGIN', 'https://ai.ristoolweb.com')
-MODELS = {'gpt-5.6-sol', 'gpt-6-astra'}
+MODEL_ID = re.compile(r'^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$')
+
+
+def valid_model(value):
+    return isinstance(value, str) and MODEL_ID.fullmatch(value) is not None
 FILES_URL = os.environ.get('FILES_URL', 'http://files:3003')
 INTERNAL_SECRET = os.environ.get('FILES_INTERNAL_SECRET', '')
 ARTIFACT_ID = re.compile(r'^[0-9a-f]{32}$')
@@ -49,7 +53,7 @@ def identity(cookie):
 
 def validate(data):
     title, model, messages = data.get('title'), data.get('model'), data.get('messages')
-    if not isinstance(title, str) or not 1 <= len(title.strip()) <= 100 or model not in MODELS:
+    if not isinstance(title, str) or not 1 <= len(title.strip()) <= 100 or not valid_model(model):
         raise ValueError('无效标题或模型')
     if not isinstance(messages, list) or len(messages) > 200:
         raise ValueError('消息过多')
@@ -61,7 +65,7 @@ def validate(data):
         if not isinstance(content, str) or not 1 <= len(content) <= 60000:
             raise ValueError('无效内容')
         item = {'role': message['role'], 'content': content}
-        if message.get('model') in MODELS:
+        if valid_model(message.get('model')):
             item['model'] = message['model']
         attachments = message.get('attachments', [])
         if not isinstance(attachments, list) or len(attachments) > 4:

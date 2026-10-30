@@ -100,6 +100,13 @@ class FileTests(unittest.TestCase):
             self.assertIn('PRIVATE_SOURCE',json.dumps(call.call_args.kwargs))
             self.assertEqual(result['text'],'总结完成')
 
+    def test_other_text_model_is_forwarded_to_one_api(self):
+        job={'request':{'prompt':'你好','model':'gpt-4','mode':'document'},'key':'token','upstream':'http://one-api:3000'}
+        with patch.object(w,'request_model',return_value={'choices':[{'message':{'content':'完成'}}]}) as call:
+            result=w.process(job)
+        self.assertEqual(result['model'],'gpt-4')
+        self.assertEqual(call.call_args.kwargs['json']['model'],'gpt-4')
+
     def test_image_config_and_edit(self):
         from PIL import Image
         stream=io.BytesIO();Image.new('RGB',(10,10)).save(stream,'PNG')
